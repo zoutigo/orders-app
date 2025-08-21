@@ -32,11 +32,22 @@ const uid = (p = '') => `${p}${Math.random().toString(36).slice(2, 9)}`;
 export const computeOrderTotal = (order: Order) =>
   order.items.reduce((sum, it) => sum + it.price * it.qty, 0);
 
+type User = {
+  id: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  password: string; // ⚠️ en vrai à ne jamais stocker en clair, mais ici pour la démo locale
+};
+
 type AppState = {
   tables: Table[];
   categories: Category[];
   products: Product[];
   orders: Order[];
+  user?: User;
+  setUser: (_user: User) => void;
+  logout: () => void;
 
   currentTableId?: string;
   currentOrderId?: string;
@@ -102,6 +113,7 @@ const persistSelector = (state: AppState) => ({
   orders: state.orders,
   currentTableId: state.currentTableId,
   currentOrderId: state.currentOrderId,
+  user: state.user, // 👈 ajoute ceci
 });
 
 export const useAppStore = create<AppState>()(
@@ -113,6 +125,10 @@ export const useAppStore = create<AppState>()(
       orders: [],
       currentTableId: undefined,
       currentOrderId: undefined,
+
+      user: undefined,
+      setUser: (user) => set({ user }),
+      logout: () => set({ user: undefined }),
 
       setTableName: (tableId, name) =>
         set((s) => ({ tables: s.tables.map((t) => (t.id === tableId ? { ...t, name } : t)) })),

@@ -22,6 +22,7 @@ export default function AuthLayout() {
       <Stack.Screen name="welcome" options={{ title: 'Bienvenue' }} />
       <Stack.Screen name="login" options={{ title: 'Connexion' }} />
       <Stack.Screen name="register" options={{ title: 'Inscription' }} />
+      <Stack.Screen name="profile" options={{ title: 'Profil' }} />
     </Stack>
   );
 }

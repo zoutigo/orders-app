@@ -8,6 +8,8 @@ import { RootStackParamList } from '@/types/navigation';
 import { router } from 'expo-router';
 import { useForm, useFormState } from 'react-hook-form';
 import ThemedInputText from '@/components/ui/ThemedInputText';
+import { useAppStore } from '@/hooks/useAppStore';
+import Toast from 'react-native-toast-message';
 
 type WelcomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
 
@@ -24,6 +26,8 @@ export default function RegisterScreen() {
   const accent = useThemeColor({}, 'accent'); // couleur accent (orange/rouge)
   const text = useThemeColor({}, 'text'); // texte principal
 
+  const setUser = useAppStore((s) => s.setUser);
+
   const { control, handleSubmit, formState, getValues } = useForm<RegisterForm>({
     defaultValues: { email: '', password: '', passwordConfirm: '', lastname: '', firstname: '' },
     mode: 'onChange',
@@ -33,7 +37,39 @@ export default function RegisterScreen() {
 
   const onSubmit = (data: RegisterForm) => {
     console.log('inscription avec :', data);
-    router.push('/(auth)/login');
+
+    try {
+      if (data.email === 'existant@client.com') {
+        Toast.show({
+          type: 'error',
+          text1: 'Erreur',
+          text2: 'Cet email est déjà utilisé 🚫',
+        });
+        return;
+      }
+
+      // enregistre l’utilisateur
+      setUser({
+        id: Math.random().toString(36).slice(2, 9),
+        firstname: data.firstname,
+        lastname: data.lastname,
+        email: data.email,
+        password: data.password,
+      });
+
+      router.push('/(auth)/profile');
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Inscription reussie',
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erreur',
+        text2: error.message || 'Une erreur est survenue',
+      });
+    }
   };
 
   return (

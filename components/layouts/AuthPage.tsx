@@ -15,6 +15,7 @@ export default function AuthPage({ children }: AuthPageProps) {
     register: 'Inscription',
     login: 'Connexion',
     welcome: 'Bienvenue',
+    profile: 'Profil',
   };
 
   // récupère le titre ou sinon fallback au nom brut
