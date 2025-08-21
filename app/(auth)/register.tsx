@@ -1,12 +1,11 @@
-// app/welcome.tsx
+// app/login.tsx
 
 import AuthPage from '@/components/layouts/AuthPage';
-import WelcomeScreen from '@/screens/WelcomeScreen';
-
+import RegisterScreen from '@/screens/RegisterScreen';
 export default function Page() {
   return (
     <AuthPage>
-      <WelcomeScreen />
+      <RegisterScreen />
     </AuthPage>
   );
 }

@@ -12,7 +12,6 @@ const Colors = {
     tint: BRAND_TEAL,
     tabIconDefault: '#9AA5B1',
     tabIconSelected: BRAND_TEAL,
-
     brand: BRAND_TEAL,
     accent: BRAND_ORANGE,
     card: '#FFFFFF',
