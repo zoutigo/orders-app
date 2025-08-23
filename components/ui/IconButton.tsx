@@ -1,5 +1,6 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import Colors from '@/constants/Colors';
 import { radius } from '@/constants/theme';
@@ -8,11 +9,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 type Variant = 'solid' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
-// 👇 Icon = ReactElement qui peut accepter size & color
-type IconEl = ReactElement<{ size?: number; color?: string }>;
-
 type Props = {
-  icon: IconEl;
+  icon: keyof typeof Ionicons.glyphMap; // 👈 accepte directement le nom d'icône
   onPress?: () => void;
   variant?: Variant;
   size?: Size;
@@ -67,10 +65,11 @@ export default function IconButton({
       {loading ? (
         <ActivityIndicator size="small" color={palette.iconColor} />
       ) : (
-        React.cloneElement(icon, {
-          size: iconSize,
-          color: isDisabled ? C.disabledText : palette.iconColor,
-        })
+        <Ionicons
+          name={icon}
+          size={iconSize}
+          color={isDisabled ? C.disabledText : palette.iconColor}
+        />
       )}
     </Pressable>
   );

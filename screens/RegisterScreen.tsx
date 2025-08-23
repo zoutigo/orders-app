@@ -57,7 +57,7 @@ export default function RegisterScreen() {
         password: data.password,
       });
 
-      router.push('/(auth)/profile');
+      router.push('/tabs');
       Toast.show({
         type: 'success',
         text1: 'Success',

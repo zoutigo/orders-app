@@ -4,6 +4,7 @@ import { ThemedText } from '@/components/ThemedText';
 import Colors from '@/constants/Colors';
 import { radius, spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { Ionicons } from '@expo/vector-icons';
 
 type Variant = 'primary' | 'ghost' | 'outline' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -16,8 +17,8 @@ type Props = {
   fullWidth?: boolean;
   disabled?: boolean;
   loading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+  leftIcon?: keyof typeof Ionicons.glyphMap;
+  rightIcon?: keyof typeof Ionicons.glyphMap;
   style?: ViewStyle | ViewStyle[];
   testID?: string;
 };
@@ -40,66 +41,82 @@ export default function Button({
 
   const { height, padH, textSize } = sizeMap[size];
 
-  // ⚡ Optimisation avec useMemo
+  // Palette dynamique
   const palette = useMemo(() => getPalette(variant, C), [variant, C]);
-  const isDisabled = useMemo(() => !!disabled || !!loading, [disabled, loading]);
+  const isDisabled = !!disabled || !!loading;
 
   return (
     <Pressable
       testID={testID}
       onPress={onPress}
-      android_ripple={{ color: C.ripple, foreground: false }}
+      android_ripple={{ color: C.ripple }}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
       style={[
         styles.base,
-        { height, paddingHorizontal: padH, borderRadius: radius.md },
+        {
+          height,
+          paddingHorizontal: padH,
+          borderRadius: radius.md,
+          borderWidth: 1,
+          borderColor: palette.borderColor,
+        },
         palette.container,
         fullWidth && { alignSelf: 'stretch' },
         isDisabled && {
           backgroundColor:
             variant === 'ghost' || variant === 'outline' ? 'transparent' : C.disabledBg,
-          borderColor: variant === 'outline' ? C.disabledBg : 'transparent',
+          borderColor: variant === 'outline' ? C.disabledBg : palette.borderColor,
           opacity: variant === 'ghost' || variant === 'outline' ? 0.5 : 1,
         },
         style as any,
       ]}
     >
-      {leftIcon ? <IconWrapper>{leftIcon}</IconWrapper> : null}
+      {/* Icône gauche */}
+      {leftIcon && (
+        <Ionicons
+          name={leftIcon}
+          size={18}
+          color={isDisabled ? C.disabledText : palette.textColor}
+          style={{ marginRight: spacing(1) }}
+        />
+      )}
 
+      {/* Texte ou Loader */}
       {loading ? (
         <ActivityIndicator size="small" color={palette.spinnerColor} />
       ) : (
         <ThemedText
           type="defaultSemiBold"
-          style={[
-            { fontSize: textSize },
-            { color: isDisabled ? C.disabledText : palette.textColor },
-          ]}
+          style={{
+            fontSize: textSize,
+            color: isDisabled ? C.disabledText : palette.textColor,
+          }}
         >
           {children}
         </ThemedText>
       )}
 
-      {rightIcon ? <IconWrapper>{rightIcon}</IconWrapper> : null}
+      {/* Icône droite */}
+      {rightIcon && (
+        <Ionicons
+          name={rightIcon}
+          size={18}
+          color={isDisabled ? C.disabledText : palette.textColor}
+          style={{ marginLeft: spacing(1) }}
+        />
+      )}
     </Pressable>
   );
 }
 
-// 🟢 IconWrapper = View simple, plus logique qu’un Pressable
-function IconWrapper({ children }: { children: React.ReactNode }) {
-  return <View style={{ marginHorizontal: spacing(0.5) }}>{children}</View>;
-}
-
 const styles = StyleSheet.create({
   base: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing(0.75),
-    borderWidth: 1,
   },
 });
 
@@ -113,26 +130,30 @@ function getPalette(variant: Variant, C: typeof Colors.light) {
   switch (variant) {
     case 'primary':
       return {
-        container: { backgroundColor: C.accent, borderColor: C.accent },
+        container: { backgroundColor: C.accent },
+        borderColor: C.accent,
         textColor: 'white',
         spinnerColor: 'white',
       };
     case 'danger':
       return {
-        container: { backgroundColor: C.danger, borderColor: C.danger },
+        container: { backgroundColor: C.danger },
+        borderColor: C.danger,
         textColor: 'white',
         spinnerColor: 'white',
       };
     case 'outline':
       return {
-        container: { backgroundColor: 'transparent', borderColor: C.border },
-        textColor: C.brand,
-        spinnerColor: C.brand,
+        container: { backgroundColor: 'transparent' },
+        borderColor: C.border,
+        textColor: C.text,
+        spinnerColor: C.text,
       };
     case 'ghost':
     default:
       return {
-        container: { backgroundColor: 'transparent', borderColor: 'transparent' },
+        container: { backgroundColor: 'transparent' },
+        borderColor: 'transparent',
         textColor: C.brand,
         spinnerColor: C.brand,
       };

@@ -71,11 +71,7 @@ export default function Toolbar({
       <View style={styles.row}>
         <View style={styles.left}>
           {back ? (
-            <IconButton
-              variant="ghost"
-              icon={<MaterialIcons name="arrow-back" />}
-              onPress={onBack ?? router.back}
-            />
+            <IconButton variant="ghost" icon="arrow-back" onPress={onBack ?? router.back} />
           ) : null}
         </View>
 

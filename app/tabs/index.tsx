@@ -1,75 +1,112 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import Colors from '@/constants/Colors';
+import { router } from 'expo-router';
+import TabScreen from '@/screens/TabScreen';
+import Card from '@/components/ui/Card';
+import { useState } from 'react';
+import Button from '@/components/ui/Button';
+import IconButton from '@/components/ui/IconButton';
+import ButtonGroup from '@/components/ui/ButtonGroup';
 
-export default function HomeScreen() {
+export default function CommandesScreen() {
+  const theme = useColorScheme() ?? 'light';
+  const C = Colors[theme];
+  const [showRestaurants, setShowRestaurant] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <TabScreen title="Application Commandes" scrollable>
+      <View style={styles.section}>
+        {/* Profil utilisateur */}
+        <Card
+          title="Profil utilisateur"
+          icon="person"
+          onPress={() => router.push('/tabs/profile')}
+          customColor={C.brand} // teal
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <View>
+          <Card
+            title="Mes restaurants"
+            icon="home"
+            onPress={() => setShowRestaurant(!showRestaurants)}
+            customColor={C.brand} // teal
+          />
+          {showRestaurants && (
+            <ButtonGroup
+              fullWidth
+              style={[
+                {
+                  borderColor: C.brand,
+                  borderWidth: 1,
+                  paddingVertical: 8,
+                  paddingLeft: 25,
+                  paddingRight: 8,
+                  borderRadius: 8,
+                },
+              ]}
+            >
+              <Button size="md" leftIcon="add-circle">
+                Créer un restaurant
+              </Button>
+              <IconButton icon="add" />
+            </ButtonGroup>
+          )}
+        </View>
+        <View>
+          <Card
+            title="Aide & Support"
+            icon="help-circle"
+            onPress={() => setShowHelp(!showHelp)}
+            customColor={C.brand} // teal
+          />
+          {showHelp && (
+            <ButtonGroup
+              fullWidth
+              direction="column"
+              style={[
+                {
+                  borderColor: C.brand,
+                  borderWidth: 1,
+                  paddingVertical: 8,
+                  paddingLeft: 25,
+                  paddingRight: 8,
+                  borderRadius: 8,
+                },
+              ]}
+            >
+              <Button
+                size="md"
+                leftIcon="book-outline"
+                style={{ minWidth: '100%', flex: 1, justifyContent: 'flex-start' }}
+              >
+                Manuel utilisateur
+              </Button>
+              <Button
+                size="md"
+                leftIcon="help-circle-outline"
+                style={{ minWidth: '100%', flex: 1, justifyContent: 'flex-start' }}
+              >
+                Questions fréquentes
+              </Button>
+              <Button
+                size="md"
+                leftIcon="bulb-outline"
+                style={{ minWidth: '100%', flex: 1, justifyContent: 'flex-start' }}
+              >
+                Bugs et suggestions
+              </Button>
+            </ButtonGroup>
+          )}
+        </View>
+      </View>
+    </TabScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  section: {
+    gap: 12,
+    marginBottom: 24,
   },
 });

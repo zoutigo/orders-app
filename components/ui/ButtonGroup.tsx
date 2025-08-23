@@ -11,27 +11,21 @@ type Align = 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'sp
 type Props = {
   children: React.ReactNode;
   direction?: Direction; // défaut: "row"
-  gap?: number; // en unités spacing(n) — défaut: 1 (8px)
-  wrap?: boolean; // retour à la ligne si nécessaire
-  align?: Align; // justifyContent
-  fullWidth?: boolean; // étire le container
-  segmented?: boolean; // fond + séparateurs
+  gap?: number; // spacing(n)
+  wrap?: boolean;
+  align?: Align;
+  fullWidth?: boolean; // ✅ gère la largeur totale
+  segmented?: boolean; // mode segmenté avec séparateurs
   style?: StyleProp<ViewStyle>;
 };
 
-/**
- * Range plusieurs boutons (IconButton ou Button) avec spacing cohérent.
- * - `direction="row" | "column"`
- * - `gap={1}` => spacing(1) = 8px
- * - `segmented` => fond "surface", bordure + séparateurs
- */
 export default function ButtonGroup({
   children,
   direction = 'row',
   gap = 1,
   wrap = false,
   align = 'start',
-  fullWidth,
+  fullWidth = false,
   segmented = false,
   style,
 }: Props) {
@@ -40,12 +34,9 @@ export default function ButtonGroup({
   const gapPx = spacing(gap);
 
   const nodes = React.Children.toArray(children).filter(Boolean);
-
-  // 👉 Alignement optimisé
   const justify = useMemo(() => mapAlign(align), [align]);
 
   if (!segmented) {
-    // Mode simple : gestion via marges
     return (
       <View
         style={[
@@ -55,6 +46,7 @@ export default function ButtonGroup({
             alignSelf: fullWidth ? 'stretch' : 'flex-start',
             alignItems: 'center',
             justifyContent: justify,
+            width: fullWidth ? '100%' : undefined, // ✅ important
           },
           style,
         ]}
@@ -67,7 +59,13 @@ export default function ButtonGroup({
               : { marginBottom: isLast ? 0 : gapPx };
 
           return (
-            <View key={idx} style={marginStyle} accessibilityRole="button">
+            <View
+              key={idx}
+              style={[
+                marginStyle,
+                fullWidth && { flex: 1 }, // ✅ enfants prennent toute la largeur
+              ]}
+            >
               {node}
             </View>
           );
@@ -76,7 +74,7 @@ export default function ButtonGroup({
     );
   }
 
-  // Mode "segmented" : fond surface + bordure + séparateurs fins entre items
+  // Mode segmenté
   return (
     <View
       style={[
@@ -87,10 +85,10 @@ export default function ButtonGroup({
           borderRadius: radius.lg,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
           flexDirection: direction,
+          width: fullWidth ? '100%' : undefined, // ✅
         },
         style,
       ]}
-      accessibilityRole="radiogroup"
     >
       {nodes.map((node, idx) => {
         const isLast = idx === nodes.length - 1;
@@ -108,8 +106,11 @@ export default function ButtonGroup({
         return (
           <View
             key={idx}
-            style={[styles.segment, dividerStyle, { padding: gapPx / 2 }]}
-            accessibilityRole="button"
+            style={[
+              styles.segment,
+              dividerStyle,
+              { padding: gapPx / 2, flex: fullWidth ? 1 : undefined }, // ✅
+            ]}
           >
             {node}
           </View>
