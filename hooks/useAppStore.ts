@@ -50,7 +50,7 @@ type AppState = {
   setCurrentRestaurant: (_id?: string) => void;
   disconnectRestaurant: () => void;
 
-  // Gestion des tables
+  // Tables
   addTable: (_table: Table) => void;
   updateTable: (_id: string, _updates: Partial<Table>) => void;
   deleteTable: (_id: string) => void;
@@ -84,6 +84,11 @@ type AppState = {
   updateRestaurant: (_id: string, _updates: Partial<Restaurant>) => void;
   deleteRestaurant: (_id: string) => void;
 
+  // Produits
+  addProduct: (_product: Product) => void;
+  updateProduct: (_id: string, _updates: Partial<Product>) => void;
+  deleteProduct: (_id: string) => void;
+
   // Divers
   _hydrated?: boolean;
   hydrateDone: () => void;
@@ -97,24 +102,35 @@ const seedCategories: Category[] = [
   { id: 'cat-dessert', code: 'DESSERT', name: 'Desserts' },
   { id: 'cat-accomp', code: 'ACCOMP', name: 'Accompagnements' },
   { id: 'cat-suppl', code: 'SUPPL', name: 'Suppléments' },
+  { id: 'cat-boiss', code: 'BOISS', name: 'Boissons' },
 ];
 
+const defaultRestaurantId = 'seed-resto-1';
+
 const seedProducts: Product[] = [
-  { id: 'p-ent-1', name: 'Mini-samoussas', categoryId: 'cat-entree', price: 800 },
-  { id: 'p-ent-2', name: 'Salade fraîche', categoryId: 'cat-entree', price: 700 },
-  { id: 'p-plt-1', name: 'Poulet DG', categoryId: 'cat-plat', price: 3500 },
-  { id: 'p-plt-2', name: 'Poisson braisé', categoryId: 'cat-plat', price: 4000 },
-  { id: 'p-des-1', name: 'Beignets banane', categoryId: 'cat-dessert', price: 600 },
-  { id: 'p-des-2', name: 'Ananas frais', categoryId: 'cat-dessert', price: 500 },
-  { id: 'p-acc-1', name: 'Plantains', categoryId: 'cat-accomp', price: 700 },
-  { id: 'p-acc-2', name: 'Pommes sautées', categoryId: 'cat-accomp', price: 800 },
-  { id: 'p-sup-1', name: 'Sauce piquante', categoryId: 'cat-suppl', price: 200 },
-  { id: 'p-sup-2', name: 'Portion riz', categoryId: 'cat-suppl', price: 500 },
+  {
+    id: 'p-ent-1',
+    name: 'Mini-samoussas',
+    categoryId: 'cat-entree',
+    restaurantId: defaultRestaurantId,
+    price: 800,
+    description: 'Petits samoussas croustillants',
+    isAvailable: true,
+  },
+  {
+    id: 'p-plt-1',
+    name: 'Poulet DG',
+    categoryId: 'cat-plat',
+    restaurantId: defaultRestaurantId,
+    price: 3500,
+    description: 'Plat africain incontournable',
+    isAvailable: true,
+  },
 ];
 
 const seedTables: Table[] = [];
 
-const STORE_VERSION = 3;
+const STORE_VERSION = 5; // incrément car mise à jour Product
 
 const persistSelector = (state: AppState) => ({
   tables: state.tables,
@@ -182,6 +198,17 @@ export const useAppStore = create<AppState>()(
         set((s) => ({
           tables: s.tables.map((t) => (t.id === tableId ? { ...t, status: 'LIBRE' } : t)),
         })),
+
+      // Products CRUD
+      addProduct: (product) =>
+        set((s) => ({
+          products: [...s.products, { ...product, id: product.id || uid('P') }],
+        })),
+      updateProduct: (id, updates) =>
+        set((s) => ({
+          products: s.products.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+        })),
+      deleteProduct: (id) => set((s) => ({ products: s.products.filter((p) => p.id !== id) })),
 
       // Orders
       openOrderForTable: (tableId) => {
@@ -334,7 +361,9 @@ export const useAppStore = create<AppState>()(
       partialize: persistSelector,
       migrate: (persisted, fromVersion) => {
         if (!persisted) return persisted;
-        if (fromVersion < 3) return { ...persisted, currentRestaurantId: undefined };
+        if (fromVersion < 5) {
+          return { ...persisted, products: seedProducts }; // migration ajout restaurantId/description/isAvailable
+        }
         return persisted;
       },
       onRehydrateStorage: () => (state) => state?.hydrateDone(),

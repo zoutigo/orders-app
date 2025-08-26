@@ -10,9 +10,9 @@ export default function ParamsIndex() {
     <View style={{ flex: 1, padding: 20, gap: 16 }}>
       <Button
         fullWidth
-        onPress={() => router.push(`/restaurant/${currentRestaurantId}/(tabs)/params/menus`)}
+        onPress={() => router.push(`/restaurant/${currentRestaurantId}/(tabs)/params/products`)}
       >
-        Gérer les menus
+        Gérer les produits
       </Button>
       <Button
         fullWidth
@@ -24,7 +24,7 @@ export default function ParamsIndex() {
         fullWidth
         onPress={() => router.push(`/restaurant/${currentRestaurantId}/(tabs)/params/users`)}
       >
-        Gérer les rôles
+        Gérer les utilisateurs
       </Button>
       <Button
         fullWidth
