@@ -40,14 +40,17 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Toast />
-      <Stack screenOptions={{ headerShown: false }} initialRouteName="(auth)">
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="tabs" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="(auth)">
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="tabs" />
+          <Stack.Screen name="restaurant" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+      <Toast position="top" visibilityTime={2500} />
+    </>
   );
 }

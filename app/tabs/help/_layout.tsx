@@ -1,17 +1,18 @@
-// app/(tabs)/_layout.tsx
+// app/(app)/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function RootTabsLayout() {
+export default function AppTabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#e74c3c',
+        tabBarActiveTintColor: '#e74c3c', // accent
+        tabBarStyle: { backgroundColor: '#fff' },
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="manual"
         options={{
           title: 'Accueil',
           tabBarIcon: ({ color, size }) => (
@@ -20,20 +21,20 @@ export default function RootTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="operations"
+        name="faq"
         options={{
-          title: 'Opérations',
+          title: 'Profil',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="layers-outline" size={size} color={color} />
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="params/index"
+        name="suggestions"
         options={{
-          title: 'Paramètres',
+          title: 'Aide',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
+            <Ionicons name="help-circle-outline" size={size} color={color} />
           ),
         }}
       />

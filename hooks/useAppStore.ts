@@ -10,21 +10,10 @@ import {
   Table,
   TableStatus,
 } from '@/types';
+import { Restaurant } from '@/types/restaurants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-
-// import {
-//   Category,
-//   Comment,
-//   Order,
-//   OrderItem,
-//   OrderStatus,
-//   Product,
-//   ProductCategoryCode,
-//   Table,
-//   TableStatus,
-// } from '@types';
 
 const isoNow = () => new Date().toISOString();
 const uid = (p = '') => `${p}${Math.random().toString(36).slice(2, 9)}`;
@@ -37,17 +26,34 @@ type User = {
   firstname: string;
   lastname: string;
   email: string;
-  password: string; // ⚠️ en vrai à ne jamais stocker en clair, mais ici pour la démo locale
+  password: string; // ⚠️ démo seulement
 };
 
 type AppState = {
+  restaurants: Restaurant[];
   tables: Table[];
   categories: Category[];
   products: Product[];
   orders: Order[];
-  user?: User;
-  setUser: (_user: User) => void;
+
+  // Multi-utilisateurs
+  users: User[];
+  currentUserId?: string;
+  addUser: (_user: User) => void;
+  updateUser: (_id: string, _updates: Partial<User>) => void;
+  removeUser: (_id: string) => void;
+  setCurrentUser: (_id: string) => void;
   logout: () => void;
+
+  // Restaurant courant
+  currentRestaurantId?: string;
+  setCurrentRestaurant: (_id?: string) => void;
+  disconnectRestaurant: () => void;
+
+  // Gestion des tables
+  addTable: (_table: Table) => void;
+  updateTable: (_id: string, _updates: Partial<Table>) => void;
+  deleteTable: (_id: string) => void;
 
   currentTableId?: string;
   currentOrderId?: string;
@@ -73,11 +79,18 @@ type AppState = {
   getProductsByCategoryCode: (_code: ProductCategoryCode) => Product[];
   getOrderTotal: (_orderId: string) => number;
 
+  // Restaurants
+  addRestaurant: (_resto: Restaurant) => void;
+  updateRestaurant: (_id: string, _updates: Partial<Restaurant>) => void;
+  deleteRestaurant: (_id: string) => void;
+
+  // Divers
   _hydrated?: boolean;
   hydrateDone: () => void;
   resetAll: () => void;
 };
 
+// Seeds
 const seedCategories: Category[] = [
   { id: 'cat-entree', code: 'ENTREE', name: 'Entrées' },
   { id: 'cat-plat', code: 'PLAT', name: 'Plats' },
@@ -99,21 +112,19 @@ const seedProducts: Product[] = [
   { id: 'p-sup-2', name: 'Portion riz', categoryId: 'cat-suppl', price: 500 },
 ];
 
-const seedTables: Table[] = Array.from({ length: 8 }, (_, i) => ({
-  id: `T${i + 1}`,
-  name: `Table ${i + 1}`,
-  status: 'LIBRE' as TableStatus,
-}));
+const seedTables: Table[] = [];
 
-const STORE_VERSION = 1;
+const STORE_VERSION = 3;
+
 const persistSelector = (state: AppState) => ({
   tables: state.tables,
   categories: state.categories,
   products: state.products,
   orders: state.orders,
-  currentTableId: state.currentTableId,
-  currentOrderId: state.currentOrderId,
-  user: state.user, // 👈 ajoute ceci
+  restaurants: state.restaurants,
+  users: state.users,
+  currentUserId: state.currentUserId,
+  currentRestaurantId: state.currentRestaurantId,
 });
 
 export const useAppStore = create<AppState>()(
@@ -123,36 +134,61 @@ export const useAppStore = create<AppState>()(
       categories: seedCategories,
       products: seedProducts,
       orders: [],
+      restaurants: [],
+      users: [],
+      currentUserId: undefined,
+      currentRestaurantId: undefined,
       currentTableId: undefined,
       currentOrderId: undefined,
 
-      user: undefined,
-      setUser: (user) => set({ user }),
-      logout: () => set({ user: undefined }),
+      // Users
+      addUser: (user) =>
+        set((s) => ({ users: [...s.users, { ...user, id: user.id || uid('u_') }] })),
+      updateUser: (id, updates) =>
+        set((s) => ({ users: s.users.map((u) => (u.id === id ? { ...u, ...updates } : u)) })),
+      removeUser: (id) =>
+        set((s) => ({
+          users: s.users.filter((u) => u.id !== id),
+          currentUserId: s.currentUserId === id ? undefined : s.currentUserId,
+        })),
+      setCurrentUser: (id) => set({ currentUserId: id }),
+      logout: () => set({ currentUserId: undefined, currentRestaurantId: undefined }),
 
+      // Restaurants
+      addRestaurant: (resto) =>
+        set((s) => ({ restaurants: [...s.restaurants, { ...resto, id: resto.id || uid('r_') }] })),
+      updateRestaurant: (id, updates) =>
+        set((s) => ({
+          restaurants: s.restaurants.map((r) => (r.id === id ? { ...r, ...updates } : r)),
+        })),
+      deleteRestaurant: (id) =>
+        set((s) => ({ restaurants: s.restaurants.filter((r) => r.id !== id) })),
+      setCurrentRestaurant: (id?: string) => set({ currentRestaurantId: id }),
+      disconnectRestaurant: () => set({ currentRestaurantId: undefined }),
+
+      // Tables
+      addTable: (table) =>
+        set((s) => ({ tables: [...s.tables, { ...table, id: table.id || uid('T') }] })),
+      updateTable: (id, updates) =>
+        set((s) => ({ tables: s.tables.map((t) => (t.id === id ? { ...t, ...updates } : t)) })),
+      deleteTable: (id) => set((s) => ({ tables: s.tables.filter((t) => t.id !== id) })),
       setTableName: (tableId, name) =>
         set((s) => ({ tables: s.tables.map((t) => (t.id === tableId ? { ...t, name } : t)) })),
-
       occupyTable: (tableId) =>
         set((s) => ({
           tables: s.tables.map((t) => (t.id === tableId ? { ...t, status: 'OCCUPEE' } : t)),
         })),
-
       freeTable: (tableId) =>
         set((s) => ({
-          tables: s.tables.map((t) =>
-            t.id === tableId && !t.activeOrderId ? { ...t, status: 'LIBRE' } : t,
-          ),
+          tables: s.tables.map((t) => (t.id === tableId ? { ...t, status: 'LIBRE' } : t)),
         })),
 
+      // Orders
       openOrderForTable: (tableId) => {
         const state = get();
         const table = state.tables.find((t) => t.id === tableId);
         if (!table) throw new Error('Table inconnue');
-        if (table.activeOrderId) {
-          set({ currentTableId: tableId, currentOrderId: table.activeOrderId });
-          return table.activeOrderId;
-        }
+
         const orderId = '#' + (100 + state.orders.length + 1);
         const order: Order = {
           id: orderId,
@@ -163,33 +199,27 @@ export const useAppStore = create<AppState>()(
             { id: uid('c_'), role: 'SERVEUR', message: 'Ouverture du ticket', at: isoNow() },
           ],
         };
+
         set((s) => ({
           orders: [order, ...s.orders],
-          tables: s.tables.map((t) =>
-            t.id === tableId ? { ...t, status: 'EN_SERVICE', activeOrderId: orderId } : t,
-          ),
+          tables: s.tables.map((t) => (t.id === tableId ? { ...t, status: 'EN_SERVICE' } : t)),
           currentTableId: tableId,
           currentOrderId: orderId,
         }));
+
         return orderId;
       },
-
       moveOrderToTable: (orderId, newTableId) => {
         const s = get();
         const order = s.orders.find((o) => o.id === orderId);
         const to = s.tables.find((t) => t.id === newTableId);
         if (!order || !to) return;
-        if (to.activeOrderId && to.activeOrderId !== orderId) return;
-        const from = s.tables.find((t) => t.id === order.tableId);
+
         set({
           orders: s.orders.map((o) => (o.id === orderId ? { ...o, tableId: newTableId } : o)),
           tables: s.tables.map((t) => {
-            if (from && t.id === from.id) {
-              return { ...t, activeOrderId: undefined, status: 'LIBRE' as TableStatus };
-            }
-            if (t.id === newTableId) {
-              return { ...t, activeOrderId: orderId, status: 'EN_SERVICE' as TableStatus };
-            }
+            if (t.id === order.tableId) return { ...t, status: 'LIBRE' as TableStatus };
+            if (t.id === newTableId) return { ...t, status: 'EN_SERVICE' as TableStatus };
             return t;
           }),
           currentTableId: newTableId,
@@ -215,7 +245,6 @@ export const useAppStore = create<AppState>()(
         }
         set({ orders: s.orders.map((o) => (o.id === orderId ? { ...o, items: newItems } : o)) });
       },
-
       updateItemQty: (orderId, orderItemId, qty) => {
         const s = get();
         set({
@@ -226,7 +255,6 @@ export const useAppStore = create<AppState>()(
           ),
         });
       },
-
       removeItemFromOrder: (orderId, orderItemId) => {
         const s = get();
         set({
@@ -235,7 +263,6 @@ export const useAppStore = create<AppState>()(
           ),
         });
       },
-
       addOrderComment: (orderId, role, message) => {
         const s = get();
         set({
@@ -246,60 +273,56 @@ export const useAppStore = create<AppState>()(
           ),
         });
       },
-
       setOrderStatus: (orderId, status) => {
         const s = get();
         set({ orders: s.orders.map((o) => (o.id === orderId ? { ...o, status } : o)) });
       },
-
       closeOrder: (orderId) => {
         const s = get();
         const order = s.orders.find((o) => o.id === orderId);
         if (!order) return;
         set({
           orders: s.orders.map((o) => (o.id === orderId ? { ...o, status: 'SERVIE' } : o)),
-          tables: s.tables.map((t) =>
-            t.id === order.tableId ? { ...t, status: 'LIBRE', activeOrderId: undefined } : t,
-          ),
+          tables: s.tables.map((t) => (t.id === order.tableId ? { ...t, status: 'LIBRE' } : t)),
           currentOrderId: undefined,
         });
       },
 
+      // Selectors
       selectTable: (tableId) => set({ currentTableId: tableId }),
       selectOrder: (orderId) => set({ currentOrderId: orderId }),
-
       getActiveOrderForTable: (tableId) => {
         const s = get();
-        const tid = s.tables.find((t) => t.id === tableId)?.activeOrderId;
-        if (!tid) return undefined;
-        return s.orders.find((o) => o.id === tid);
+        return s.orders.find((o) => o.tableId === tableId && o.status !== 'SERVIE');
       },
-
       getProductsByCategory: (categoryId) => {
         const s = get();
         return s.products.filter((p) => p.categoryId === categoryId);
       },
-
       getProductsByCategoryCode: (code) => {
         const s = get();
         const cat = s.categories.find((c) => c.code === code);
         return cat ? s.products.filter((p) => p.categoryId === cat.id) : [];
       },
-
       getOrderTotal: (orderId) => {
         const s = get();
         const order = s.orders.find((o) => o.id === orderId);
         return order ? computeOrderTotal(order) : 0;
       },
 
+      // Divers
       _hydrated: false,
       hydrateDone: () => set({ _hydrated: true }),
       resetAll: () =>
         set(() => ({
-          tables: seedTables,
+          tables: [],
           categories: seedCategories,
           products: seedProducts,
           orders: [],
+          restaurants: [],
+          users: [],
+          currentUserId: undefined,
+          currentRestaurantId: undefined,
           currentTableId: undefined,
           currentOrderId: undefined,
         })),
@@ -311,12 +334,10 @@ export const useAppStore = create<AppState>()(
       partialize: persistSelector,
       migrate: (persisted, fromVersion) => {
         if (!persisted) return persisted;
-        if (fromVersion < 1) return persisted;
+        if (fromVersion < 3) return { ...persisted, currentRestaurantId: undefined };
         return persisted;
       },
-      onRehydrateStorage: () => (state) => {
-        state?.hydrateDone();
-      },
+      onRehydrateStorage: () => (state) => state?.hydrateDone(),
     },
   ),
 );

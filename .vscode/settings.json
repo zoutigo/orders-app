@@ -16,5 +16,6 @@
   "editor.inlineSuggest.enabled": true,
 
   // Terminal intégré (bash par défaut)
-  "terminal.integrated.defaultProfile.linux": "bash"
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "CodeGPT.apiKey": "OpenAI"
 }

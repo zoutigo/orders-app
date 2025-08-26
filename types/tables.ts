@@ -2,7 +2,10 @@ export type TableStatus = 'LIBRE' | 'OCCUPEE' | 'EN_SERVICE';
 
 export interface Table {
   id: string; // ex: "T1"
-  name: string; // ex: "Table 1", "VIP"
+  name: string; // ex: "Table VIP"
   status: TableStatus;
-  activeOrderId?: string; // ticket ouvert
+  seats: number;
+  isUsable: boolean;
+  description?: string;
+  restaurantId: string; // lien vers le restaurant
 }

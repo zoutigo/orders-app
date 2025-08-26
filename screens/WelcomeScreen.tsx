@@ -3,27 +3,11 @@ import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import Button from '@/components/ui/Button';
 import { router } from 'expo-router';
-import { useForm } from 'react-hook-form';
-import ThemedInputText from '@/components/ui/ThemedInputText';
-
-type LoginForm = {
-  email: string;
-  password: string;
-};
 
 export default function WelcomeScreen() {
   const cardBg = useThemeColor({}, 'card'); // fond pastel
   const accent = useThemeColor({}, 'accent'); // couleur accent (orange/rouge)
   const text = useThemeColor({}, 'text'); // texte principal
-
-  const { control, handleSubmit } = useForm<LoginForm>({
-    defaultValues: { email: '', password: '' },
-  });
-
-  const onSubmit = (data: LoginForm) => {
-    console.log('Connexion avec :', data);
-    router.push('/(auth)/login');
-  };
 
   return (
     <View style={styles.container}>
@@ -32,44 +16,8 @@ export default function WelcomeScreen() {
       </ThemedText>
 
       <View style={[styles.card, { backgroundColor: cardBg }]}>
-        <View style={styles.form}>
-          {/* Email */}
-          <ThemedInputText
-            name="email"
-            control={control}
-            label="Adresse e-mail"
-            placeholder="ex: contact@monresto.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            icon="mail-outline"
-            rules={{
-              required: 'L’email est requis',
-              pattern: {
-                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: 'Email invalide',
-              },
-            }}
-          />
-
-          {/* Mot de passe */}
-          <ThemedInputText
-            name="password"
-            control={control}
-            label="Mot de passe"
-            placeholder="••••••••"
-            secureTextEntry
-            autoCapitalize="none"
-            icon="lock-closed-outline"
-            isPassword
-            rules={{
-              required: 'Le mot de passe est requis',
-              minLength: { value: 6, message: '6 caractères minimum' },
-            }}
-          />
-        </View>
-
         {/* Bouton principal */}
-        <Button fullWidth size="lg" onPress={handleSubmit(onSubmit)}>
+        <Button fullWidth size="lg" onPress={() => router.push('/(auth)/login')}>
           Connexion
         </Button>
 
