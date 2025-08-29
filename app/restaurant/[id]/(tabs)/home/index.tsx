@@ -1,12 +1,5 @@
-import { useLocalSearchParams } from 'expo-router';
-import { View, Text } from 'react-native';
+import RestaurantDashboardScreen from '@/screens/RestaurantDashboardScreen';
 
-export default function RestaurantScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Restaurant ID : {id}</Text>
-    </View>
-  );
+export default function RestaurantDashboard() {
+  return <RestaurantDashboardScreen />;
 }

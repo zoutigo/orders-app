@@ -32,8 +32,15 @@ export default function RootTabsLayout() {
         name="params/index"
         options={{
           title: 'Paramètres',
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile/index"
+        options={{
+          title: 'Profil',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
+            <Ionicons name="logo-amplify" size={size} color={color} />
           ),
         }}
       />

@@ -1,73 +1,98 @@
-import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import Button from '@/components/ui/Button';
+// app/(auth)/welcome.tsx (ou ton chemin actuel)
+import React from 'react';
+import { View, StyleSheet, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
+import { ThemedText } from '@/components/ThemedText';
+import Button from '@/components/ui/Button';
+import Colors from '@/constants/Colors';
+import { spacing, radius, typography } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/useColorScheme';
+
 export default function WelcomeScreen() {
-  const cardBg = useThemeColor({}, 'card'); // fond pastel
-  const accent = useThemeColor({}, 'accent'); // couleur accent (orange/rouge)
-  const text = useThemeColor({}, 'text'); // texte principal
+  const scheme = useColorScheme() ?? 'light';
+  const C = Colors[scheme];
 
   return (
-    <View style={styles.container}>
-      <ThemedText type="subtitle" style={[styles.title, { color: text }]}>
-        Gestion des commandes{'\n'}simplifiée pour votre resto
-      </ThemedText>
-
-      <View style={[styles.card, { backgroundColor: cardBg }]}>
-        {/* Bouton principal */}
-        <Button fullWidth size="lg" onPress={() => router.push('/(auth)/login')}>
-          Connexion
-        </Button>
-
-        <Button
-          fullWidth
-          size="lg"
-          variant="outline"
-          onPress={() => router.push('/(auth)/register')}
-          style={{ marginVertical: 30 }}
+    <View style={{ gap: spacing(2) }}>
+      {/* HERO compact */}
+      <View style={[styles.hero, { backgroundColor: C.brand }]}>
+        <View style={[styles.heroIcon, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+          <Ionicons name="restaurant-outline" size={28} color={C.neutral0} />
+        </View>
+        <ThemedText type="title" style={{ color: C.neutral0, textAlign: 'center' }}>
+          Bienvenue
+        </ThemedText>
+        <ThemedText
+          type="subtitle"
+          style={{ color: C.neutral0, opacity: 0.95, textAlign: 'center', marginTop: spacing(0.5) }}
         >
-          Inscription
-        </Button>
+          Gestion des commandes{'\n'}simplifiée pour votre resto
+        </ThemedText>
+      </View>
+
+      {/* CARD CTA */}
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: C.card,
+            borderColor: C.border,
+          },
+        ]}
+      >
+        <Text style={{ ...(typography.default as any), color: C.muted, textAlign: 'center' }}>
+          Connectez-vous ou créez un compte pour accéder à votre espace de gestion.
+        </Text>
+
+        <View style={{ gap: spacing(1.5), marginTop: spacing(1.5) }}>
+          <Button
+            fullWidth
+            size="lg"
+            leftIcon="log-in-outline"
+            onPress={() => router.push('/(auth)/login')}
+          >
+            Connexion
+          </Button>
+          <Button
+            fullWidth
+            size="lg"
+            variant="outline"
+            leftIcon="person-add-outline"
+            onPress={() => router.push('/(auth)/register')}
+          >
+            Inscription
+          </Button>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'flex-start',
+  hero: {
     alignItems: 'center',
-    padding: 4,
-    height: '100%',
+    paddingVertical: spacing(2.5),
+    paddingHorizontal: spacing(2),
+    borderRadius: radius.lg,
+  },
+  heroIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing(1),
   },
   card: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    width: '95%',
-    height: '72%',
-    borderRadius: 24,
-    paddingVertical: 30,
-    paddingHorizontal: 28,
-    alignItems: 'center',
+    borderRadius: radius.lg,
+    padding: spacing(2),
+    borderWidth: 1,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 10,
-    elevation: 6,
-  },
-  title: {
-    marginTop: 100,
-    marginBottom: 50,
-    letterSpacing: 2,
-    fontSize: 20,
-    marginHorizontal: 20,
-    textAlign: 'center',
-  },
-  form: {
-    width: '100%',
-    marginBottom: 20,
+    elevation: 2,
   },
 });

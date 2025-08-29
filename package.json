@@ -71,7 +71,8 @@
     "undefined": "@/types/navigation",
     "zustand": "^5.0.7",
     "@react-native-picker/picker": "2.11.1",
-    "@react-native-community/datetimepicker": "8.4.1"
+    "@react-native-community/datetimepicker": "8.4.1",
+    "expo-clipboard": "~7.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

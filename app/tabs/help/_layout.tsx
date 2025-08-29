@@ -1,43 +1,13 @@
-// app/(app)/(tabs)/_layout.tsx
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+// app/tabs/help/_layout.tsx
+import { Stack } from 'expo-router';
 
-export default function AppTabsLayout() {
+export default function HelpStack() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#e74c3c', // accent
-        tabBarStyle: { backgroundColor: '#fff' },
-      }}
-    >
-      <Tabs.Screen
-        name="manual"
-        options={{
-          title: 'Accueil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="faq"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="suggestions"
-        options={{
-          title: 'Aide',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="help-circle-outline" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="manual" />
+      <Stack.Screen name="faq" />
+      <Stack.Screen name="contact" />
+    </Stack>
   );
 }
