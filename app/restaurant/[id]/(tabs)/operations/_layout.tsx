@@ -1,52 +1,15 @@
-// app/(tabs)/operations/_layout.tsx
-import { Ionicons } from '@expo/vector-icons';
-import { Drawer } from 'expo-router/drawer';
+// app/restaurant/[id]/(tabs)/operations/_layout.tsx
+import { Stack } from 'expo-router';
 
-export default function OperationsTopTabsLayout() {
+export default function OperationsLayout() {
   return (
-    <Drawer
-      screenOptions={{
-        headerShown: true,
-        headerTitleAlign: 'center',
-        drawerActiveTintColor: '#e74c3c',
-      }}
-    >
-      <Drawer.Screen
-        name="cuisine"
-        options={{
-          title: 'Cuisine',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="caisse"
-        options={{
-          title: 'Caisse',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="service"
-        options={{
-          title: 'Service',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="supervision"
-        options={{
-          title: 'Supervision',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
-        }}
-      />
-    </Drawer>
+    <Stack screenOptions={{ headerTitleAlign: 'center' }}>
+      <Stack.Screen name="index" options={{ title: 'Opérations' }} />
+      <Stack.Screen name="waiter/index" options={{ title: 'Serveur' }} />
+      <Stack.Screen name="preparation/index" options={{ title: 'Préparation' }} />
+      <Stack.Screen name="preparation/products" options={{ title: 'Produits (Prépa)' }} />
+      <Stack.Screen name="cashier/index" options={{ title: 'Caisse' }} />
+      <Stack.Screen name="supervisor/index" options={{ title: 'Superviseur' }} />
+    </Stack>
   );
 }

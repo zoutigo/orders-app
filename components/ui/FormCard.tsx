@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { radius, spacing } from '@/constants/theme';
 
 type Props = {
   children: React.ReactNode;
@@ -14,9 +15,7 @@ export default function FormCard({ children, style, cardStyle }: Props) {
 
   return (
     <View style={[styles.container, style]}>
-      <View style={[styles.card, { backgroundColor: cardBg }, cardStyle]}>
-        <>{children}</>
-      </View>
+      <View style={[styles.card, { backgroundColor: cardBg }, cardStyle]}>{children}</View>
     </View>
   );
 }
@@ -24,23 +23,17 @@ export default function FormCard({ children, style, cardStyle }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginTop: 100,
-    padding: 4,
-    height: '100%',
+    paddingHorizontal: spacing(2),
+    paddingTop: spacing(1),
   },
   card: {
-    width: '90%',
-    height: '90%',
-    borderRadius: 24,
-    paddingHorizontal: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: radius.lg,
+    padding: spacing(2),
+    // shadow
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 10,
-    elevation: 4,
+    elevation: 3,
   },
 });
