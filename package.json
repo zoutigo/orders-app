@@ -14,14 +14,6 @@
     "format": "prettier --write .",
     "preinstall": "npx npm-force-resolutions"
   },
-  "resolutions": {
-    "metro": "0.81.5",
-    "metro-config": "0.81.5",
-    "metro-core": "0.81.5",
-    "metro-resolver": "0.81.5",
-    "metro-runtime": "0.81.5",
-    "metro-transform-worker": "0.81.5"
-  },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
@@ -31,6 +23,8 @@
     "@react-navigation/material-top-tabs": "^7.3.6",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/native-stack": "^7.3.25",
+    "@react-native-community/datetimepicker": "8.4.1",
+    "@react-native-picker/picker": "2.11.1",
     "expo": "~53.0.20",
     "expo-blur": "~14.1.5",
     "expo-constants": "~17.1.7",
@@ -45,15 +39,8 @@
     "expo-symbols": "~0.4.5",
     "expo-system-ui": "~5.0.10",
     "expo-web-browser": "~14.2.0",
-    "install": "^0.13.0",
+    "expo-clipboard": "~7.1.5",
     "lucide-react-native": "^0.540.0",
-    "metro": "0.81.5",
-    "metro-config": "0.81.5",
-    "metro-core": "0.81.5",
-    "metro-resolver": "0.81.5",
-    "metro-runtime": "0.81.5",
-    "metro-transform-worker": "0.81.5",
-    "npm": "^11.5.2",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-hook-form": "^7.62.0",
@@ -68,11 +55,7 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
-    "undefined": "@/types/navigation",
-    "zustand": "^5.0.7",
-    "@react-native-picker/picker": "2.11.1",
-    "@react-native-community/datetimepicker": "8.4.1",
-    "expo-clipboard": "~7.1.5"
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

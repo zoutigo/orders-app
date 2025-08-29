@@ -1,0 +1,36 @@
+name: Expo Build Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Lint check
+        run: npm run lint
+
+      - name: Check Expo export (Android)
+        run: npx expo export --platform android
+
+      - name: Check Expo export (iOS)
+        run: npx expo export --platform ios
