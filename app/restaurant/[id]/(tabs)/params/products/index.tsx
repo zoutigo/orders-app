@@ -24,7 +24,10 @@ export default function ProductsIndex() {
         fullWidth
         size="lg"
         onPress={() =>
-          router.push({ pathname: '/restaurant/[id]/(tabs)/params/products/create', params: { id: currentRestaurantId! } })
+          router.push({
+            pathname: '/restaurant/[id]/(tabs)/params/products/create',
+            params: { id: currentRestaurantId! },
+          })
         }
       >
         Ajouter une produit
