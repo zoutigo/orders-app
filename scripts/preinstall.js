@@ -1,4 +1,4 @@
-// Skip lockfile mutation on CI to keep `npm ci` happy
+// Skip lockfile mutation on CI to keep `npm ci` happy.
 // When running locally, still allow `npm-force-resolutions` to patch the lock.
 const { spawnSync } = require('node:child_process');
 
@@ -10,5 +10,4 @@ if (process.env.CI) {
 
 console.log('[preinstall] Applying npm-force-resolutions locally');
 const res = spawnSync('npx', ['npm-force-resolutions'], { stdio: 'inherit' });
-process.exit(res.status || 0);
-
+process.exit(res.status ?? 0);
