@@ -23,13 +23,10 @@ jobs:
           node-version: 18
           cache: 'npm'
 
-      - name: Install dependencies (CI)
+      - name: Install dependencies (CI - npm@10, lockfile enforced)
         run: |
-          echo "Installing with npm ci (lockfile enforced)";
-          npm ci --no-audit --no-fund || (
-            echo "npm ci failed; falling back to npm install";
-            npm install --no-audit --no-fund
-          )
+          echo "Installing with npm@10 ci (lockfile enforced)";
+          npx -y npm@10 ci --no-audit --no-fund
 
       - name: Prettier check
         run: npx prettier --check .
