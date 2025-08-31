@@ -1,0 +1,18 @@
+# Folders
+node_modules
+.expo
+dist
+dist-android
+dist-ios
+build
+android
+ios
+
+# Lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Misc
+.DS_Store
+*.log
