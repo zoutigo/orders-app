@@ -1,13 +1,17 @@
-import { View, Text } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, ScrollView, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import Button from '@/components/ui/Button';
 import { ThemedText } from '@/components/ThemedText';
+import AuthHeroCard from '@/components/auth/AuthHeroCard';
 import { useAppStore } from '@/hooks/useAppStore';
 import Colors from '@/constants/Colors';
-import { spacing, radius, typography } from '@/constants/theme';
+import { spacing, radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
+
+type SectionKey = 'products' | 'orders' | 'users' | 'tables';
 
 export default function ParamsIndex() {
   const currentRestaurantId = useAppStore((s) => s.currentRestaurantId);
@@ -18,142 +22,94 @@ export default function ParamsIndex() {
   const theme = useColorScheme() ?? 'light';
   const C = Colors[theme];
 
+  const sections: { key: SectionKey; title: string; icon: keyof typeof Ionicons.glyphMap; desc: string }[] = [
+    { key: 'products', title: 'Produits', icon: 'fast-food-outline', desc: 'Créer, éditer, catégories' },
+    { key: 'orders', title: 'Commandes', icon: 'receipt-outline', desc: 'Historique et suivi' },
+    { key: 'users', title: 'Utilisateurs', icon: 'people-outline', desc: 'Accès et profils' },
+    { key: 'tables', title: 'Tables', icon: 'grid-outline', desc: 'Plan de salle' },
+  ];
+
+  const openSection = useCallback(
+    (key: SectionKey) => {
+      if (!currentRestaurantId) return;
+      const id = currentRestaurantId;
+      switch (key) {
+        case 'products':
+          router.push({ pathname: '/restaurant/[id]/params/products', params: { id } });
+          break;
+        case 'orders':
+          router.push({ pathname: '/restaurant/[id]/params/orders', params: { id } });
+          break;
+        case 'users':
+          router.push({ pathname: '/restaurant/[id]/params/users', params: { id } });
+          break;
+        case 'tables':
+          router.push({ pathname: '/restaurant/[id]/params/tables', params: { id } });
+          break;
+      }
+    },
+    [currentRestaurantId],
+  );
+
   return (
-    <View style={{ flex: 1, backgroundColor: C.background }}>
-      {/* ---------- Hero / Header ---------- */}
-      <View
-        style={{
-          backgroundColor: C.brand,
-          paddingTop: spacing(3),
-          paddingBottom: spacing(4),
-          paddingHorizontal: spacing(2),
-          borderBottomLeftRadius: radius.lg,
-          borderBottomRightRadius: radius.lg,
-        }}
-      >
-        <View style={{ alignItems: 'center' }}>
-          <View
+    <ScrollView
+      style={{ flex: 1, backgroundColor: C.background }}
+      contentContainerStyle={{ padding: spacing(2) }}
+    >
+      <AuthHeroCard
+        icon="settings-outline"
+        title="Paramètres du restaurant"
+        subtitle={restaurantName}
+      />
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1.5) }}>
+        {sections.map((s) => (
+          <Pressable
+            key={s.key}
+            onPress={() => openSection(s.key)}
+            android_ripple={{ color: C.ripple }}
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              backgroundColor: 'rgba(255,255,255,0.15)',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: spacing(1.25),
+              width: '48%',
+              minHeight: 116,
+              padding: spacing(1.5),
+              borderRadius: radius.lg,
+              backgroundColor: C.card,
+              borderWidth: 1,
+              borderColor: C.border,
+              justifyContent: 'space-between',
             }}
           >
-            <Ionicons name="settings-outline" size={30} color={C.neutral0} />
-          </View>
-
-          <ThemedText type="title" style={{ color: C.neutral0, textAlign: 'center' }}>
-            Configuration du restaurant
-          </ThemedText>
-
-          <Text
-            style={{
-              ...(typography.default as any),
-              color: 'rgba(255,255,255,0.9)',
-              marginTop: spacing(0.5),
-              textAlign: 'center',
-            }}
-          >
-            {restaurantName}
-          </Text>
-        </View>
+            <View
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme === 'light' ? C.neutral100 : C.neutral50,
+                marginBottom: spacing(1),
+              }}
+            >
+              <Ionicons name={s.icon} size={22} color={C.brand} />
+            </View>
+            <View>
+              <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>{s.title}</ThemedText>
+              <ThemedText style={{ color: C.muted, marginTop: 2 }}>{s.desc}</ThemedText>
+            </View>
+          </Pressable>
+        ))}
       </View>
 
-      {/* ---------- Contenu ---------- */}
-      <View style={{ flex: 1, padding: spacing(2) }}>
-        {/* petite carte d’intro */}
-        <View
-          style={{
-            backgroundColor: C.surface,
-            borderColor: C.border,
-            borderWidth: 1,
-            borderRadius: radius.lg,
-            padding: spacing(1.5),
-            marginTop: -spacing(2), // chevauchement élégant sous le header
-            marginBottom: spacing(2),
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="information-circle-outline" size={18} color={C.brand} />
-            <Text style={{ marginLeft: spacing(1), color: C.text, opacity: 0.85 }}>
-              Gérez les éléments clés du restaurant : produits, commandes, utilisateurs et tables.
-            </Text>
-          </View>
-        </View>
+      <View style={{ height: spacing(2) }} />
 
-        {/* section */}
-        <ThemedText type="subtitle" style={{ color: C.text, marginBottom: spacing(1) }}>
-          Gestion
-        </ThemedText>
-
-        <View style={{ gap: spacing(1.5) }}>
-          <Button
-            fullWidth
-            size="lg"
-            leftIcon="fast-food-outline"
-            onPress={() =>
-              router.push({ pathname: '/restaurant/[id]/params/products', params: { id: currentRestaurantId! } })
-            }
-          >
-            Gérer les produits
-          </Button>
-
-          <Button
-            fullWidth
-            size="lg"
-            variant="outline"
-            leftIcon="receipt-outline"
-            onPress={() =>
-              router.push({ pathname: '/restaurant/[id]/params/orders', params: { id: currentRestaurantId! } })
-            }
-          >
-            Gérer les commandes
-          </Button>
-
-          <Button
-            fullWidth
-            size="lg"
-            variant="primary"
-            leftIcon="people-outline"
-            onPress={() =>
-              router.push({ pathname: '/restaurant/[id]/params/users', params: { id: currentRestaurantId! } })
-            }
-          >
-            Gérer les utilisateurs
-          </Button>
-
-          <Button
-            fullWidth
-            size="lg"
-            variant="ghost"
-            leftIcon="grid-outline"
-            onPress={() =>
-              router.push({ pathname: '/restaurant/[id]/params/tables', params: { id: currentRestaurantId! } })
-            }
-          >
-            Gérer les tables
-          </Button>
-        </View>
-      </View>
-
-      {/* ---------- Footer discret ---------- */}
-      <View
-        style={{
-          paddingVertical: spacing(1.25),
-          alignItems: 'center',
-          borderTopColor: C.border,
-          borderTopWidth: 1,
-        }}
+      <Button
+        fullWidth
+        variant="outline"
+        leftIcon="home-outline"
+        onPress={() => router.replace({ pathname: '/restaurant/[id]/home', params: { id: currentRestaurantId! } })}
       >
-        <Text style={{ color: C.muted, fontSize: 12 }}>
-          Palette : <Text style={{ color: C.accent }}>accent</Text> ·{' '}
-          <Text style={{ color: C.brand }}>brand</Text>
-        </Text>
-      </View>
-    </View>
+        Retour au tableau de bord
+      </Button>
+    </ScrollView>
   );
 }

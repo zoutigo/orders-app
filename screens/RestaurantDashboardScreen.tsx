@@ -1,7 +1,8 @@
 // components/restaurant/RestaurantDashboardScreen.tsx
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import React, { useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 import { useAppStore } from '@/hooks/useAppStore';
 import Colors from '@/constants/Colors';
@@ -61,6 +62,51 @@ function Card({
       </View>
       {children}
     </View>
+  );
+}
+
+/* ---------- Quick action card ---------- */
+function QuickCard({
+  title,
+  icon,
+  color,
+  onPress,
+}: {
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string; // primary color for icon/border
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      android_ripple={{ color: 'rgba(0,0,0,0.08)' }}
+      style={{
+        width: '48%',
+        minHeight: 92,
+        padding: spacing(1.5),
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: color,
+        backgroundColor: 'transparent',
+        justifyContent: 'space-between',
+      }}
+    >
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(0,0,0,0.04)',
+          marginBottom: spacing(1),
+        }}
+      >
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+      <Text style={[typography.defaultSemiBold, { fontSize: 15, color }]}>{title}</Text>
+    </Pressable>
   );
 }
 
@@ -198,19 +244,118 @@ export default function RestaurantDashboardScreen() {
     return { caJour, recordJour, caSemaine, caMois };
   }, [orders, w0, m0, now]);
 
+  const goRole = useCallback(
+    (role: 'waiter' | 'preparation' | 'cashier' | 'supervisor') => {
+      if (!restaurantId) return;
+      const base: any = {
+        waiter: { pathname: '/restaurant/[id]/operations/waiter', params: { id: restaurantId } },
+        preparation: {
+          pathname: '/restaurant/[id]/operations/preparation',
+          params: { id: restaurantId },
+        },
+        cashier: { pathname: '/restaurant/[id]/operations/cashier', params: { id: restaurantId } },
+        supervisor: {
+          pathname: '/restaurant/[id]/operations/supervisor',
+          params: { id: restaurantId },
+        },
+      };
+      router.push(base[role]);
+    },
+    [restaurantId],
+  );
+
+  const goParams = useCallback(() => {
+    if (!restaurantId) return;
+    router.push({ pathname: '/restaurant/[id]/params', params: { id: restaurantId } });
+  }, [restaurantId]);
+
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: C.background, padding: spacing(2) }}
+      style={{ flex: 1, backgroundColor: C.background }}
       contentContainerStyle={{ paddingBottom: spacing(4) }}
     >
-      {/* Titre */}
-      <Text
-        style={[typography.title, { textAlign: 'center', marginBottom: spacing(3), color: C.text }]}
+      {/* Hero header */}
+      <View
+        style={{
+          backgroundColor: C.brand,
+          paddingTop: spacing(3),
+          paddingBottom: spacing(3),
+          paddingHorizontal: spacing(2),
+          borderBottomLeftRadius: radius.lg,
+          borderBottomRightRadius: radius.lg,
+        }}
       >
-        {restaurantName}
-      </Text>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={[typography.subtitle, { color: C.neutral0, opacity: 0.9 }]}>Bienvenue</Text>
+          <Text
+            style={[
+              typography.title,
+              { color: C.neutral0, textAlign: 'center', marginTop: spacing(0.5) },
+            ]}
+          >
+            {restaurantName}
+          </Text>
 
-      {/* Cartes en colonne */}
+          {/* Small chips */}
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: spacing(1),
+              marginTop: spacing(1.25),
+            }}
+          >
+            <View
+              style={{
+                paddingHorizontal: spacing(1.25),
+                paddingVertical: 6,
+                borderRadius: radius.pill,
+                backgroundColor: 'rgba(255,255,255,0.15)',
+              }}
+            >
+              <Text style={{ color: C.neutral0 }}>
+                CA jour {fmtMoney(revenue.caJour)}
+              </Text>
+            </View>
+            <View
+              style={{
+                paddingHorizontal: spacing(1.25),
+                paddingVertical: 6,
+                borderRadius: radius.pill,
+                backgroundColor: 'rgba(255,255,255,0.15)',
+              }}
+            >
+              <Text style={{ color: C.neutral0 }}>
+                Cmd jour {ordersStats.closedDay}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Quick actions */}
+      <View style={{ paddingHorizontal: spacing(2), marginTop: -spacing(2) }}>
+        <View
+          style={{
+            backgroundColor: C.surface,
+            borderRadius: radius.lg,
+            borderColor: C.border,
+            borderWidth: 1,
+            padding: spacing(1.5),
+          }}
+        >
+          <Text style={[typography.defaultSemiBold, { marginBottom: spacing(1), color: C.text }]}>Actions rapides</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1.5) }}>
+            <QuickCard title="Serveur" icon="restaurant-outline" color={C.accent} onPress={() => goRole('waiter')} />
+            <QuickCard title="Préparation" icon="pizza-outline" color={C.brand} onPress={() => goRole('preparation')} />
+            <QuickCard title="Caisse" icon="cash-outline" color={C.success} onPress={() => goRole('cashier')} />
+            <QuickCard title="Superviseur" icon="bar-chart-outline" color={C.muted} onPress={() => goRole('supervisor')} />
+            <QuickCard title="Paramètres" icon="settings-outline" color={C.accent} onPress={goParams} />
+          </View>
+        </View>
+      </View>
+
+      {/* Stat cards */}
+      <View style={{ paddingHorizontal: spacing(2), marginTop: spacing(2) }}>
       <Card title="Commandes" icon="receipt-outline" bg={C.card} border={C.accent}>
         <StatRow label="Clôturées (jour)" value={ordersStats.closedDay} color={C.text} />
         <StatRow label="Clôturées (semaine)" value={ordersStats.closedWeek} color={C.text} />
@@ -240,6 +385,7 @@ export default function RestaurantDashboardScreen() {
         <StatRow label="Tables" value={tables.length} color={C.text} />
         <StatRow label="Utilisateurs" value={users.length} color={C.text} />
       </Card>
+      </View>
     </ScrollView>
   );
 }
