@@ -14,6 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "ci:prepare": "bash ./scripts/ci-prepare.sh",
+    "fix:lock": "bash ./scripts/fix-lock.sh",
     "preinstall": "node ./scripts/preinstall.js"
   },
   "dependencies": {

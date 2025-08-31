@@ -10,8 +10,8 @@ rm -rf node_modules
 npm install --no-audit --no-fund
 
 # 2) Ensure the lockfile is compatible with 'npm ci' (what EAS uses)
-echo "\n[2/6] Validate lockfile with 'npm ci' (dry-run)"
-npm ci --ignore-scripts --dry-run > /dev/null 2>&1 && echo "Lockfile OK for npm ci" || {
+echo "\n[2/6] Validate lockfile with 'npm ci' (dry-run, CI env)"
+CI=1 npm ci --dry-run > /dev/null 2>&1 && echo "Lockfile OK for npm ci" || {
   echo "Lockfile not in sync. Re-run 'npm install' and commit package-lock.json";
   exit 1;
 }
@@ -33,4 +33,3 @@ echo "\n[6/6] Expo Doctor"
 npx expo-doctor || true
 
 echo "\n✔ All local checks passed. You can push and build."
-
