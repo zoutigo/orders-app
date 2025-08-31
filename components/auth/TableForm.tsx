@@ -61,7 +61,7 @@ export default function TableForm({
         });
         setTimeout(() => {
           router.replace({
-            pathname: '/restaurant/[id]/params/tables/[tableId]',
+            pathname: '/restaurant/[id]/(tabs)/params/tables/[tableId]',
             params: { id: currentRestaurantId!, tableId: table.id! },
           });
         }, 1200);

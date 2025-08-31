@@ -113,7 +113,7 @@ export default function WaiterOrders() {
     (orderId: string) => {
       if (!restaurantId) return;
       router.push({
-        pathname: '/restaurant/[id]/operations/waiter/[orderId]',
+        pathname: '/restaurant/[id]/(tabs)/operations/waiter/[orderId]',
         params: { id: restaurantId, orderId },
       });
     },

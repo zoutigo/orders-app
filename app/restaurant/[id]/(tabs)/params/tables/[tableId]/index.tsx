@@ -30,7 +30,7 @@ export default function TableDetail() {
           size="lg"
           onPress={() =>
             router.push({
-              pathname: '/restaurant/[id]/params/tables/[tableId]/edit',
+              pathname: '/restaurant/[id]/(tabs)/params/tables/[tableId]/edit',
               params: { id: table.restaurantId, tableId: table.id },
             })
           }

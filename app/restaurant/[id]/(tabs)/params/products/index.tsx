@@ -24,7 +24,7 @@ export default function ProductsIndex() {
         fullWidth
         size="lg"
         onPress={() =>
-          router.push({ pathname: '/restaurant/[id]/params/products/create', params: { id: currentRestaurantId! } })
+          router.push({ pathname: '/restaurant/[id]/(tabs)/params/products/create', params: { id: currentRestaurantId! } })
         }
       >
         Ajouter une produit
@@ -41,7 +41,7 @@ export default function ProductsIndex() {
                 icon="eye-off-sharp"
                 onPress={() =>
                   router.push({
-                    pathname: '/restaurant/[id]/params/products/[productId]',
+                    pathname: '/restaurant/[id]/(tabs)/params/products/[productId]',
                     params: { id: currentRestaurantId!, productId: t.id },
                   })
                 }
@@ -50,7 +50,7 @@ export default function ProductsIndex() {
                 icon="create-outline"
                 onPress={() =>
                   router.push({
-                    pathname: '/restaurant/[id]/params/products/[productId]/edit',
+                    pathname: '/restaurant/[id]/(tabs)/params/products/[productId]/edit',
                     params: { id: currentRestaurantId!, productId: t.id },
                   })
                 }

@@ -30,7 +30,7 @@ export default function ProductDetail() {
           size="lg"
           onPress={() =>
             router.push({
-              pathname: '/restaurant/[id]/params/products/[productId]/edit',
+              pathname: '/restaurant/[id]/(tabs)/params/products/[productId]/edit',
               params: { id: product.restaurantId, productId: product.id },
             })
           }

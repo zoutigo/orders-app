@@ -2,7 +2,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 
 import { useAppStore } from '@/hooks/useAppStore';
 import Colors from '@/constants/Colors';
@@ -247,17 +247,23 @@ export default function RestaurantDashboardScreen() {
   const goRole = useCallback(
     (role: 'waiter' | 'preparation' | 'cashier' | 'supervisor') => {
       if (!restaurantId) return;
-      const base: any = {
-        waiter: { pathname: '/restaurant/[id]/operations/waiter', params: { id: restaurantId } },
+      const base: Record<string, Href> = {
+        waiter: {
+          pathname: '/restaurant/[id]/(tabs)/operations/waiter',
+          params: { id: restaurantId },
+        } as Href,
         preparation: {
-          pathname: '/restaurant/[id]/operations/preparation',
+          pathname: '/restaurant/[id]/(tabs)/operations/preparation',
           params: { id: restaurantId },
-        },
-        cashier: { pathname: '/restaurant/[id]/operations/cashier', params: { id: restaurantId } },
+        } as Href,
+        cashier: {
+          pathname: '/restaurant/[id]/(tabs)/operations/cashier',
+          params: { id: restaurantId },
+        } as Href,
         supervisor: {
-          pathname: '/restaurant/[id]/operations/supervisor',
+          pathname: '/restaurant/[id]/(tabs)/operations/supervisor',
           params: { id: restaurantId },
-        },
+        } as Href,
       };
       router.push(base[role]);
     },
@@ -266,7 +272,10 @@ export default function RestaurantDashboardScreen() {
 
   const goParams = useCallback(() => {
     if (!restaurantId) return;
-    router.push({ pathname: '/restaurant/[id]/params', params: { id: restaurantId } });
+    router.push({
+      pathname: '/restaurant/[id]/(tabs)/params',
+      params: { id: restaurantId },
+    } as Href);
   }, [restaurantId]);
 
   return (
@@ -312,9 +321,7 @@ export default function RestaurantDashboardScreen() {
                 backgroundColor: 'rgba(255,255,255,0.15)',
               }}
             >
-              <Text style={{ color: C.neutral0 }}>
-                CA jour {fmtMoney(revenue.caJour)}
-              </Text>
+              <Text style={{ color: C.neutral0 }}>CA jour {fmtMoney(revenue.caJour)}</Text>
             </View>
             <View
               style={{
@@ -324,9 +331,7 @@ export default function RestaurantDashboardScreen() {
                 backgroundColor: 'rgba(255,255,255,0.15)',
               }}
             >
-              <Text style={{ color: C.neutral0 }}>
-                Cmd jour {ordersStats.closedDay}
-              </Text>
+              <Text style={{ color: C.neutral0 }}>Cmd jour {ordersStats.closedDay}</Text>
             </View>
           </View>
         </View>
@@ -343,48 +348,75 @@ export default function RestaurantDashboardScreen() {
             padding: spacing(1.5),
           }}
         >
-          <Text style={[typography.defaultSemiBold, { marginBottom: spacing(1), color: C.text }]}>Actions rapides</Text>
+          <Text style={[typography.defaultSemiBold, { marginBottom: spacing(1), color: C.text }]}>
+            Actions rapides
+          </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1.5) }}>
-            <QuickCard title="Serveur" icon="restaurant-outline" color={C.accent} onPress={() => goRole('waiter')} />
-            <QuickCard title="Préparation" icon="pizza-outline" color={C.brand} onPress={() => goRole('preparation')} />
-            <QuickCard title="Caisse" icon="cash-outline" color={C.success} onPress={() => goRole('cashier')} />
-            <QuickCard title="Superviseur" icon="bar-chart-outline" color={C.muted} onPress={() => goRole('supervisor')} />
-            <QuickCard title="Paramètres" icon="settings-outline" color={C.accent} onPress={goParams} />
+            <QuickCard
+              title="Serveur"
+              icon="restaurant-outline"
+              color={C.accent}
+              onPress={() => goRole('waiter')}
+            />
+            <QuickCard
+              title="Préparation"
+              icon="pizza-outline"
+              color={C.brand}
+              onPress={() => goRole('preparation')}
+            />
+            <QuickCard
+              title="Caisse"
+              icon="cash-outline"
+              color={C.success}
+              onPress={() => goRole('cashier')}
+            />
+            <QuickCard
+              title="Superviseur"
+              icon="bar-chart-outline"
+              color={C.muted}
+              onPress={() => goRole('supervisor')}
+            />
+            <QuickCard
+              title="Paramètres"
+              icon="settings-outline"
+              color={C.accent}
+              onPress={goParams}
+            />
           </View>
         </View>
       </View>
 
       {/* Stat cards */}
       <View style={{ paddingHorizontal: spacing(2), marginTop: spacing(2) }}>
-      <Card title="Commandes" icon="receipt-outline" bg={C.card} border={C.accent}>
-        <StatRow label="Clôturées (jour)" value={ordersStats.closedDay} color={C.text} />
-        <StatRow label="Clôturées (semaine)" value={ordersStats.closedWeek} color={C.text} />
-        <StatRow label="Clôturées (mois)" value={ordersStats.closedMonth} color={C.text} />
-        <Divider color={C.border} />
-        <StatRow label="Brouillon" value={ordersStats.draft} color={C.muted} />
-        <StatRow label="En préparation" value={ordersStats.prep} color={C.muted} />
-        <StatRow label="Non payées" value={ordersStats.unpaid} color={C.danger} />
-      </Card>
+        <Card title="Commandes" icon="receipt-outline" bg={C.card} border={C.accent}>
+          <StatRow label="Clôturées (jour)" value={ordersStats.closedDay} color={C.text} />
+          <StatRow label="Clôturées (semaine)" value={ordersStats.closedWeek} color={C.text} />
+          <StatRow label="Clôturées (mois)" value={ordersStats.closedMonth} color={C.text} />
+          <Divider color={C.border} />
+          <StatRow label="Brouillon" value={ordersStats.draft} color={C.muted} />
+          <StatRow label="En préparation" value={ordersStats.prep} color={C.muted} />
+          <StatRow label="Non payées" value={ordersStats.unpaid} color={C.danger} />
+        </Card>
 
-      <Card title="Produits" icon="fast-food-outline" bg={C.card} border={C.brand}>
-        <StatRow label="Total produits" value={productStats.total} color={C.text} />
-        <Divider color={C.border} />
-        <StatRow label="Plus vendu" value={productStats.most} color={C.text} />
-        <StatRow label="Moins vendu" value={productStats.least} color={C.text} />
-      </Card>
+        <Card title="Produits" icon="fast-food-outline" bg={C.card} border={C.brand}>
+          <StatRow label="Total produits" value={productStats.total} color={C.text} />
+          <Divider color={C.border} />
+          <StatRow label="Plus vendu" value={productStats.most} color={C.text} />
+          <StatRow label="Moins vendu" value={productStats.least} color={C.text} />
+        </Card>
 
-      <Card title="Chiffre d’affaires" icon="cash-outline" bg={C.card} border={C.success}>
-        <StatRow label="Aujourd’hui" value={fmtMoney(revenue.caJour)} color={C.text} />
-        <StatRow label="Record journalier" value={fmtMoney(revenue.recordJour)} color={C.text} />
-        <Divider color={C.border} />
-        <StatRow label="Cette semaine" value={fmtMoney(revenue.caSemaine)} color={C.text} />
-        <StatRow label="Ce mois" value={fmtMoney(revenue.caMois)} color={C.text} />
-      </Card>
+        <Card title="Chiffre d’affaires" icon="cash-outline" bg={C.card} border={C.success}>
+          <StatRow label="Aujourd’hui" value={fmtMoney(revenue.caJour)} color={C.text} />
+          <StatRow label="Record journalier" value={fmtMoney(revenue.recordJour)} color={C.text} />
+          <Divider color={C.border} />
+          <StatRow label="Cette semaine" value={fmtMoney(revenue.caSemaine)} color={C.text} />
+          <StatRow label="Ce mois" value={fmtMoney(revenue.caMois)} color={C.text} />
+        </Card>
 
-      <Card title="Ressources" icon="grid-outline" bg={C.card} border={C.neutral400}>
-        <StatRow label="Tables" value={tables.length} color={C.text} />
-        <StatRow label="Utilisateurs" value={users.length} color={C.text} />
-      </Card>
+        <Card title="Ressources" icon="grid-outline" bg={C.card} border={C.neutral400}>
+          <StatRow label="Tables" value={tables.length} color={C.text} />
+          <StatRow label="Utilisateurs" value={users.length} color={C.text} />
+        </Card>
       </View>
     </ScrollView>
   );

@@ -19,7 +19,7 @@ export function useOrderActions(orderId: string) {
       if (rid) {
         setTimeout(() => {
           router.replace({
-            pathname: '/restaurant/[id]/operations/waiter',
+            pathname: '/restaurant/[id]/(tabs)/operations/waiter',
             params: { id: rid },
           });
         }, 0);

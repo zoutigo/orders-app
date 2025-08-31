@@ -5,24 +5,36 @@ import Button from '@/components/ui/Button';
 import { ThemedText } from '@/components/ThemedText';
 import AuthHeroCard from '@/components/auth/AuthHeroCard';
 import Colors from '@/constants/Colors';
-import { spacing, radius, typography } from '@/constants/theme';
+import { spacing, radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useAppStore } from '@/hooks/useAppStore';
 
 type RoleKey = 'waiter' | 'preparation' | 'cashier' | 'supervisor';
 
-function hrefForRole(role: RoleKey, id: string) {
+function hrefForRole(role: RoleKey, id: string): Href {
   switch (role) {
     case 'waiter':
-      return { pathname: '/restaurant/[id]/operations/waiter' as const, params: { id } };
+      return {
+        pathname: '/restaurant/[id]/(tabs)/operations/waiter' as const,
+        params: { id },
+      } as Href;
     case 'preparation':
-      return { pathname: '/restaurant/[id]/operations/preparation' as const, params: { id } };
+      return {
+        pathname: '/restaurant/[id]/(tabs)/operations/preparation' as const,
+        params: { id },
+      } as Href;
     case 'cashier':
-      return { pathname: '/restaurant/[id]/operations/cashier' as const, params: { id } };
+      return {
+        pathname: '/restaurant/[id]/(tabs)/operations/cashier' as const,
+        params: { id },
+      } as Href;
     case 'supervisor':
     default:
-      return { pathname: '/restaurant/[id]/operations/supervisor' as const, params: { id } };
+      return {
+        pathname: '/restaurant/[id]/(tabs)/operations/supervisor' as const,
+        params: { id },
+      } as Href;
   }
 }
 
@@ -31,7 +43,12 @@ export default function OperationsIndex() {
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
 
-  const roles: { key: RoleKey; label: string; icon: keyof typeof Ionicons.glyphMap; desc: string }[] = [
+  const roles: {
+    key: RoleKey;
+    label: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    desc: string;
+  }[] = [
     { key: 'waiter', label: 'Serveur', icon: 'restaurant-outline', desc: 'Tables et commandes' },
     { key: 'preparation', label: 'Préparation', icon: 'pizza-outline', desc: 'Cuisine & suivi' },
     { key: 'cashier', label: 'Caisse', icon: 'cash-outline', desc: 'Encaissements' },

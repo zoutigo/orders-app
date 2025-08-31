@@ -35,16 +35,16 @@ export default function ParamsIndex() {
       const id = currentRestaurantId;
       switch (key) {
         case 'products':
-          router.push({ pathname: '/restaurant/[id]/params/products', params: { id } });
+          router.push({ pathname: '/restaurant/[id]/(tabs)/params/products', params: { id } });
           break;
         case 'orders':
-          router.push({ pathname: '/restaurant/[id]/params/orders', params: { id } });
+          router.push({ pathname: '/restaurant/[id]/(tabs)/params/orders', params: { id } });
           break;
         case 'users':
-          router.push({ pathname: '/restaurant/[id]/params/users', params: { id } });
+          router.push({ pathname: '/restaurant/[id]/(tabs)/params/users', params: { id } });
           break;
         case 'tables':
-          router.push({ pathname: '/restaurant/[id]/params/tables', params: { id } });
+          router.push({ pathname: '/restaurant/[id]/(tabs)/params/tables', params: { id } });
           break;
       }
     },
@@ -106,7 +106,9 @@ export default function ParamsIndex() {
         fullWidth
         variant="outline"
         leftIcon="home-outline"
-        onPress={() => router.replace({ pathname: '/restaurant/[id]/home', params: { id: currentRestaurantId! } })}
+        onPress={() =>
+          router.replace({ pathname: '/restaurant/[id]/(tabs)/home', params: { id: currentRestaurantId! } })
+        }
       >
         Retour au tableau de bord
       </Button>

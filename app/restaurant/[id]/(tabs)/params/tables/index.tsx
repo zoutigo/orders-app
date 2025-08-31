@@ -24,7 +24,7 @@ export default function TablesIndex() {
         fullWidth
         size="lg"
         onPress={() =>
-          router.push({ pathname: '/restaurant/[id]/params/tables/create', params: { id: currentRestaurantId! } })
+          router.push({ pathname: '/restaurant/[id]/(tabs)/params/tables/create', params: { id: currentRestaurantId! } })
         }
       >
         Ajouter une table
@@ -41,7 +41,7 @@ export default function TablesIndex() {
                 icon="eye-off-sharp"
                 onPress={() =>
                   router.push({
-                    pathname: '/restaurant/[id]/params/tables/[tableId]',
+                    pathname: '/restaurant/[id]/(tabs)/params/tables/[tableId]',
                     params: { id: currentRestaurantId!, tableId: t.id },
                   })
                 }
@@ -50,7 +50,7 @@ export default function TablesIndex() {
                 icon="create-outline"
                 onPress={() =>
                   router.push({
-                    pathname: '/restaurant/[id]/params/tables/[tableId]/edit',
+                    pathname: '/restaurant/[id]/(tabs)/params/tables/[tableId]/edit',
                     params: { id: currentRestaurantId!, tableId: t.id },
                   })
                 }

@@ -81,7 +81,7 @@ export default function ProductForm({
         });
         setTimeout(() => {
           router.replace({
-            pathname: '/restaurant/[id]/params/products/[productId]',
+            pathname: '/restaurant/[id]/(tabs)/params/products/[productId]',
             params: { id: currentRestaurantId!, productId: product.id! },
           });
         }, 900);
