@@ -87,7 +87,7 @@ export default function LoginForm() {
         fullWidth
         size="lg"
         variant="outline"
-        onPress={() => router.push('/(auth)/register')}
+        onPress={() => router.push('/register')}
         style={{ marginVertical: 30 }}
       >
         Inscription

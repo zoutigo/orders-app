@@ -23,9 +23,7 @@ export default function TablesIndex() {
       <Button
         fullWidth
         size="lg"
-        onPress={() =>
-          router.push(`/restaurant/${currentRestaurantId}/(tabs)/params/tables/create`)
-        }
+        onPress={() => router.push(`/restaurant/${currentRestaurantId}/params/tables/create`)}
       >
         Ajouter une table
       </Button>
@@ -40,15 +38,13 @@ export default function TablesIndex() {
               <IconButton
                 icon="eye-off-sharp"
                 onPress={() =>
-                  router.push(`/restaurant/${currentRestaurantId}/(tabs)/params/tables/${t.id}`)
+                  router.push(`/restaurant/${currentRestaurantId}/params/tables/${t.id}`)
                 }
               />
               <IconButton
                 icon="create-outline"
                 onPress={() =>
-                  router.push(
-                    `/restaurant/${currentRestaurantId}/(tabs)/params/tables/${t.id}/edit`,
-                  )
+                  router.push(`/restaurant/${currentRestaurantId}/params/tables/${t.id}/edit`)
                 }
               />
               <IconButton icon="trash-outline" onPress={() => handleDelete(t.id)} />

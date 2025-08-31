@@ -24,7 +24,7 @@ export default function ProductsIndex() {
         fullWidth
         size="lg"
         onPress={() =>
-          router.push(`/restaurant/${currentRestaurantId}/(tabs)/params/products/create`)
+          router.push(`/restaurant/${currentRestaurantId}/params/products/create`)
         }
       >
         Ajouter une produit
@@ -40,14 +40,14 @@ export default function ProductsIndex() {
               <IconButton
                 icon="eye-off-sharp"
                 onPress={() =>
-                  router.push(`/restaurant/${currentRestaurantId}/(tabs)/params/products/${t.id}`)
+                  router.push(`/restaurant/${currentRestaurantId}/params/products/${t.id}`)
                 }
               />
               <IconButton
                 icon="create-outline"
                 onPress={() =>
                   router.push(
-                    `/restaurant/${currentRestaurantId}/(tabs)/params/products/${t.id}/edit`,
+                    `/restaurant/${currentRestaurantId}/params/products/${t.id}/edit`,
                   )
                 }
               />

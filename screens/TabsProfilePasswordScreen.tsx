@@ -23,7 +23,7 @@ export default function TabsProfilePasswordScreen() {
   const me = useMemo(() => users.find((u) => u.id === currentUserId), [users, currentUserId]);
 
   useEffect(() => {
-    if (!me) router.replace('/(auth)/login');
+    if (!me) router.replace('/login');
   }, [me]);
 
   const { control, handleSubmit, getValues, formState } = useForm<FormData>({

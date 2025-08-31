@@ -80,7 +80,7 @@ export default function ProductForm({
           visibilityTime: 1500,
         });
         setTimeout(() => {
-          router.replace(`/restaurant/${currentRestaurantId}/(tabs)/params/products/${product.id}`);
+          router.replace(`/restaurant/${currentRestaurantId}/params/products/${product.id}`);
         }, 900);
       } else {
         // ⬇️ Construction d'un Product COMPLET pour addProduct

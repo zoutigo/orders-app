@@ -24,7 +24,7 @@ export default function TabsEditProfileScreen() {
 
   // redirection propre si pas de session
   useEffect(() => {
-    if (!me) router.replace('/(auth)/login');
+    if (!me) router.replace('/login');
   }, [me]);
 
   const { control, handleSubmit, formState } = useForm<FormData>({

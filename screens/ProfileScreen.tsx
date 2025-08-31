@@ -28,7 +28,7 @@ export default function ProfileScreen() {
 
   // 🔁 Redirection propre (pas de return avant hooks)
   useEffect(() => {
-    if (!user) router.replace('/(auth)/login');
+    if (!user) router.replace('/login');
   }, [user]);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -140,7 +140,7 @@ export default function ProfileScreen() {
         onConfirm={() => {
           setConfirmOpen(false);
           logout();
-          router.replace('/(auth)/login');
+          router.replace('/login');
         }}
         onCancel={() => setConfirmOpen(false)}
       />

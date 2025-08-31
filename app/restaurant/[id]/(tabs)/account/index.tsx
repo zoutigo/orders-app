@@ -16,7 +16,7 @@ export default function RestaurantDisconnect() {
   const handleFullDisconnect = () => {
     setCurrentRestaurant(undefined);
     logout();
-    router.replace('/(auth)/login'); // retour à l’écran de connexion
+    router.replace('/login'); // retour à l’écran de connexion
   };
 
   return (

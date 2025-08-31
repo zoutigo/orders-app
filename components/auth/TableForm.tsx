@@ -60,7 +60,7 @@ export default function TableForm({
           text2: `Table "${data.name}" mise à jour ✅`,
         });
         setTimeout(() => {
-          router.replace(`/restaurant/${currentRestaurantId}/(tabs)/params/tables/${table.id}`);
+          router.replace(`/restaurant/${currentRestaurantId}/params/tables/${table.id}`);
         }, 1200);
       } else {
         addTable({

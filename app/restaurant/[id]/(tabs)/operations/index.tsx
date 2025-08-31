@@ -27,15 +27,11 @@ export default function OperationsIndex() {
       {roles.map((role) => (
         <Button
           key={role.key}
-          onPress={() =>
-            router.push({
-              pathname: `/restaurant/[restaurantId]/(tabs)/operations/[role]` as any,
-              params: {
-                restaurantId: currentRestaurantId,
-                role: role.key,
-              },
-            })
-          }
+          onPress={() => {
+            // Use a concrete route without group segments for reliability in release builds
+            if (!currentRestaurantId) return;
+            router.push(`/restaurant/${currentRestaurantId}/operations/${role.key}`);
+          }}
         >
           {role.label}
         </Button>

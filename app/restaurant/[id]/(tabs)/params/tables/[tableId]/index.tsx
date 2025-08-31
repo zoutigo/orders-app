@@ -29,7 +29,7 @@ export default function TableDetail() {
           fullWidth
           size="lg"
           onPress={() =>
-            router.push(`/restaurant/${table.restaurantId}/(tabs)/params/tables/${table.id}/edit`)
+            router.push(`/restaurant/${table.restaurantId}/params/tables/${table.id}/edit`)
           }
         >
           Modifier

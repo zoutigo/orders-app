@@ -51,7 +51,7 @@ export default function WelcomeScreen() {
             fullWidth
             size="lg"
             leftIcon="log-in-outline"
-            onPress={() => router.push('/(auth)/login')}
+            onPress={() => router.push('/login')}
           >
             Connexion
           </Button>
@@ -60,7 +60,7 @@ export default function WelcomeScreen() {
             size="lg"
             variant="outline"
             leftIcon="person-add-outline"
-            onPress={() => router.push('/(auth)/register')}
+            onPress={() => router.push('/register')}
           >
             Inscription
           </Button>
