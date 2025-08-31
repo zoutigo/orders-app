@@ -22,8 +22,18 @@ export default function ParamsIndex() {
   const theme = useColorScheme() ?? 'light';
   const C = Colors[theme];
 
-  const sections: { key: SectionKey; title: string; icon: keyof typeof Ionicons.glyphMap; desc: string }[] = [
-    { key: 'products', title: 'Produits', icon: 'fast-food-outline', desc: 'Créer, éditer, catégories' },
+  const sections: {
+    key: SectionKey;
+    title: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    desc: string;
+  }[] = [
+    {
+      key: 'products',
+      title: 'Produits',
+      icon: 'fast-food-outline',
+      desc: 'Créer, éditer, catégories',
+    },
     { key: 'orders', title: 'Commandes', icon: 'receipt-outline', desc: 'Historique et suivi' },
     { key: 'users', title: 'Utilisateurs', icon: 'people-outline', desc: 'Accès et profils' },
     { key: 'tables', title: 'Tables', icon: 'grid-outline', desc: 'Plan de salle' },
@@ -93,7 +103,9 @@ export default function ParamsIndex() {
               <Ionicons name={s.icon} size={22} color={C.brand} />
             </View>
             <View>
-              <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>{s.title}</ThemedText>
+              <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>
+                {s.title}
+              </ThemedText>
               <ThemedText style={{ color: C.muted, marginTop: 2 }}>{s.desc}</ThemedText>
             </View>
           </Pressable>
@@ -107,7 +119,10 @@ export default function ParamsIndex() {
         variant="outline"
         leftIcon="home-outline"
         onPress={() =>
-          router.replace({ pathname: '/restaurant/[id]/(tabs)/home', params: { id: currentRestaurantId! } })
+          router.replace({
+            pathname: '/restaurant/[id]/(tabs)/home',
+            params: { id: currentRestaurantId! },
+          })
         }
       >
         Retour au tableau de bord

@@ -39,40 +39,40 @@ export default function RestaurantDisconnect() {
       <Toolbar title="Mon compte" subtitle={user?.email ?? ''} centerTitle sticky />
       <ToolbarSpacer />
       <View style={{ padding: spacing(2) }}>
-      {/* --------- User Card --------- */}
-      <View
-        style={{
-          backgroundColor: C.card,
-          borderWidth: 1,
-          borderColor: C.border,
-          borderRadius: radius.lg,
-          padding: spacing(2),
-          marginBottom: spacing(2),
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: scheme === 'light' ? C.neutral100 : C.neutral50,
-              marginRight: spacing(1.5),
-            }}
-          >
-            <Ionicons name="person-outline" size={28} color={C.brand} />
-          </View>
+        {/* --------- User Card --------- */}
+        <View
+          style={{
+            backgroundColor: C.card,
+            borderWidth: 1,
+            borderColor: C.border,
+            borderRadius: radius.lg,
+            padding: spacing(2),
+            marginBottom: spacing(2),
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: scheme === 'light' ? C.neutral100 : C.neutral50,
+                marginRight: spacing(1.5),
+              }}
+            >
+              <Ionicons name="person-outline" size={28} color={C.brand} />
+            </View>
 
-          <View style={{ flex: 1 }}>
-            <ThemedText type="subtitle">
-              {user ? `${user.firstname} ${user.lastname}` : 'Utilisateur inconnu'}
-            </ThemedText>
-            <ThemedText style={{ color: C.muted }}>{user?.email ?? '—'}</ThemedText>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="subtitle">
+                {user ? `${user.firstname} ${user.lastname}` : 'Utilisateur inconnu'}
+              </ThemedText>
+              <ThemedText style={{ color: C.muted }}>{user?.email ?? '—'}</ThemedText>
+            </View>
           </View>
         </View>
-      </View>
       </View>
 
       {/* --------- Actions --------- */}
