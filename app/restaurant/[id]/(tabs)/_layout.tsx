@@ -29,16 +29,16 @@ export default function RootTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="params/index"
+        name="params"
         options={{
           title: 'Paramètres',
           tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="profile/index"
+        name="account"
         options={{
-          title: 'Profil',
+          title: 'Mon compte',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="logo-amplify" size={size} color={color} />
           ),

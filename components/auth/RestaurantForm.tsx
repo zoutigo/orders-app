@@ -53,7 +53,7 @@ export default function RestaurantForm() {
       });
 
       // Retour à la section Restaurants (ou la page précédente)
-      router.replace('/tabs/restaurants');
+      router.replace('/tabs');
     } catch (error: any) {
       Toast.show({
         type: 'error',

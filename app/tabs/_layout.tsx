@@ -27,38 +27,20 @@ export default function AppTabsLayout() {
         }}
       />
 
-      {/* <Tabs.Screen
-        name="profile/index"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      /> */}
-      {/* <Tabs.Screen
-        name="help/index"
+      <Tabs.Screen
+        // si ta page racine d’aide est app/(app)/(tabs)/help/index.tsx
+        name="help"
         options={{
           title: 'Aide',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="help-circle-outline" size={size} color={color} />
-          ),
-        }}
-      /> */}
-      <Tabs.Screen
-        // si ta page racine d’aide est app/(app)/(tabs)/help/index.tsx
-        name="help/index"
-        options={{
-          title: 'Aide',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="help-buoy-outline" size={size} color={color} />
           ),
           // permet aussi d’ouvrir /tabs/help via push('/tabs/help')
           href: '/tabs/help',
         }}
       />
       <Tabs.Screen
-        name="profile/index"
+        name="profile"
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, size }) => (
@@ -69,7 +51,7 @@ export default function AppTabsLayout() {
       />
       <Tabs.Screen
         // racine des restaurants dans le groupe tabs : restaurants/index.tsx
-        name="restaurants/index"
+        name="restaurants"
         options={{
           title: 'Restaurants',
           tabBarIcon: ({ color, size }) => (

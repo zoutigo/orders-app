@@ -7,8 +7,9 @@ export default function SupervisorActions() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      {' '}
-      <ThemedText>Supervisor Actions</ThemedText>
+      <ThemedText>
+        <Text>Supervisor actions</Text>
+      </ThemedText>
     </View>
   );
 }
