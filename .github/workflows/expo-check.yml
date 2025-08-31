@@ -40,8 +40,8 @@ jobs:
       - name: Lint check
         run: npm run lint
 
-      - name: Expo doctor
-        run: npx expo doctor
+      - name: Expo Doctor
+        run: npx expo-doctor
 
       - name: Check Expo export (Android)
         run: npx expo export --platform android --output-dir dist-android
