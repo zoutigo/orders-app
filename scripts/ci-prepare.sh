@@ -2,16 +2,16 @@
 set -euo pipefail
 
 echo "=== CI Prepare: local validation before push ==="
-echo "Node: $(node -v)  npm: $(npm -v)"
+echo "Node: $(node -v)  npm(local): $(npm -v)"
 
 # 1) Fresh install to refresh and sync the lockfile (local only)
-echo "\n[1/6] Fresh install (updates lockfile if needed)"
+echo "\n[1/6] Fresh install with npm@10 (updates lockfile if needed)"
 rm -rf node_modules
-npm install --no-audit --no-fund
+npx -y npm@10 install --no-audit --no-fund
 
 # 2) Ensure the lockfile is compatible with 'npm ci' (what EAS uses)
-echo "\n[2/6] Validate lockfile with 'npm ci' (dry-run, CI env)"
-CI=1 npm ci --dry-run > /dev/null 2>&1 && echo "Lockfile OK for npm ci" || {
+echo "\n[2/6] Validate lockfile with npm@10 'ci' (dry-run, CI env)"
+CI=1 npx -y npm@10 ci --dry-run > /dev/null 2>&1 && echo "Lockfile OK for npm ci" || {
   echo "Lockfile not in sync. Re-run 'npm install' and commit package-lock.json";
   exit 1;
 }
