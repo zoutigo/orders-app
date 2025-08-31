@@ -95,7 +95,9 @@ export default function ParamsIndex() {
             fullWidth
             size="lg"
             leftIcon="fast-food-outline"
-            onPress={() => router.push(`/restaurant/${currentRestaurantId}/params/products`)}
+            onPress={() =>
+              router.push({ pathname: '/restaurant/[id]/params/products', params: { id: currentRestaurantId! } })
+            }
           >
             Gérer les produits
           </Button>
@@ -105,7 +107,9 @@ export default function ParamsIndex() {
             size="lg"
             variant="outline"
             leftIcon="receipt-outline"
-            onPress={() => router.push(`/restaurant/${currentRestaurantId}/params/orders`)}
+            onPress={() =>
+              router.push({ pathname: '/restaurant/[id]/params/orders', params: { id: currentRestaurantId! } })
+            }
           >
             Gérer les commandes
           </Button>
@@ -115,7 +119,9 @@ export default function ParamsIndex() {
             size="lg"
             variant="primary"
             leftIcon="people-outline"
-            onPress={() => router.push(`/restaurant/${currentRestaurantId}/params/users`)}
+            onPress={() =>
+              router.push({ pathname: '/restaurant/[id]/params/users', params: { id: currentRestaurantId! } })
+            }
           >
             Gérer les utilisateurs
           </Button>
@@ -125,7 +131,9 @@ export default function ParamsIndex() {
             size="lg"
             variant="ghost"
             leftIcon="grid-outline"
-            onPress={() => router.push(`/restaurant/${currentRestaurantId}/params/tables`)}
+            onPress={() =>
+              router.push({ pathname: '/restaurant/[id]/params/tables', params: { id: currentRestaurantId! } })
+            }
           >
             Gérer les tables
           </Button>

@@ -29,7 +29,10 @@ export default function ProductDetail() {
           fullWidth
           size="lg"
           onPress={() =>
-            router.push(`/restaurant/${product.restaurantId}/params/products/${product.id}/edit`)
+            router.push({
+              pathname: '/restaurant/[id]/params/products/[productId]/edit',
+              params: { id: product.restaurantId, productId: product.id },
+            })
           }
         >
           Modifier

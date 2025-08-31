@@ -3,10 +3,26 @@ import Button from '@/components/ui/Button';
 import { router } from 'expo-router';
 import { useAppStore } from '@/hooks/useAppStore';
 
+type RoleKey = 'waiter' | 'preparation' | 'cashier' | 'supervisor';
+
+function hrefForRole(role: RoleKey, id: string) {
+  switch (role) {
+    case 'waiter':
+      return { pathname: '/restaurant/[id]/operations/waiter' as const, params: { id } };
+    case 'preparation':
+      return { pathname: '/restaurant/[id]/operations/preparation' as const, params: { id } };
+    case 'cashier':
+      return { pathname: '/restaurant/[id]/operations/cashier' as const, params: { id } };
+    case 'supervisor':
+    default:
+      return { pathname: '/restaurant/[id]/operations/supervisor' as const, params: { id } };
+  }
+}
+
 export default function OperationsIndex() {
   const currentRestaurantId = useAppStore((s) => s.currentRestaurantId);
 
-  const roles = [
+  const roles: { key: RoleKey; label: string }[] = [
     { key: 'waiter', label: '👨‍🍳 Serveur' },
     { key: 'preparation', label: '🥘 Préparation' },
     { key: 'cashier', label: '💰 Caisse' },
@@ -28,9 +44,8 @@ export default function OperationsIndex() {
         <Button
           key={role.key}
           onPress={() => {
-            // Use a concrete route without group segments for reliability in release builds
             if (!currentRestaurantId) return;
-            router.push(`/restaurant/${currentRestaurantId}/operations/${role.key}`);
+            router.push(hrefForRole(role.key, currentRestaurantId));
           }}
         >
           {role.label}

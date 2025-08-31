@@ -60,7 +60,10 @@ export default function TableForm({
           text2: `Table "${data.name}" mise à jour ✅`,
         });
         setTimeout(() => {
-          router.replace(`/restaurant/${currentRestaurantId}/params/tables/${table.id}`);
+          router.replace({
+            pathname: '/restaurant/[id]/params/tables/[tableId]',
+            params: { id: currentRestaurantId!, tableId: table.id! },
+          });
         }, 1200);
       } else {
         addTable({

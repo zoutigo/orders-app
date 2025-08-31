@@ -35,7 +35,7 @@ export default function TabsActionsScreen() {
   const goResto = useCallback(
     (id: string) => {
       setCurrentRestaurant(id);
-      router.push(`/restaurant/${id}/home`);
+      router.push({ pathname: '/restaurant/[id]/home', params: { id } });
     },
     [setCurrentRestaurant],
   );
