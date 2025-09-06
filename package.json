@@ -91,7 +91,9 @@
       "**/__tests__/**/*.test.ts?(x)",
       "**/?(*.)+(spec|test).ts?(x)"
     ],
-    "setupFilesAfterEnv": ["@testing-library/jest-native/extend-expect"],
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-native/extend-expect"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
     },

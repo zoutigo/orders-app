@@ -71,4 +71,3 @@ jobs:
           else
             echo "No test:e2e script, skipping";
           fi
-
