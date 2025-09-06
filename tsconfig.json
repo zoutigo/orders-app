@@ -3,6 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx", // 👈 important
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "paths": {
       "@/*": ["./*"]
     }
