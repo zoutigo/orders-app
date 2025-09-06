@@ -1,0 +1,74 @@
+name: Expo CI Checks (develop)
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+env:
+  EXPO_NO_TELEMETRY: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies (CI - npm@10, lockfile enforced)
+        run: |
+          echo "Installing with npm@10 ci (lockfile enforced)";
+          npx -y npm@10 ci --no-audit --no-fund
+
+      - name: Prettier check
+        run: npx prettier --check .
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Lint check
+        run: npm run lint
+
+      - name: Expo Doctor
+        run: npx expo-doctor
+
+      - name: Check Expo export (Android)
+        run: npx expo export --platform android --output-dir dist-android
+
+      - name: Check Expo export (iOS)
+        run: npx expo export --platform ios --output-dir dist-ios
+
+      - name: Dry-run prebuild (native config)
+        run: npx expo prebuild --no-install --clean
+
+      # Optional tests (run only if scripts exist)
+      - name: Unit tests
+        run: |
+          if npm run -s | grep -q "test:unit"; then
+            echo "Running unit tests";
+            npm run test:unit;
+          else
+            echo "No test:unit script, skipping";
+          fi
+
+      - name: Functional/E2E tests
+        run: |
+          if npm run -s | grep -q "test:e2e"; then
+            echo "Running e2e tests";
+            npm run test:e2e;
+          else
+            echo "No test:e2e script, skipping";
+          fi
+
