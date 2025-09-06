@@ -48,7 +48,7 @@ describe('Flow: Connexion -> /tabs', () => {
     const app = renderRouter('./app', { initialUrl: '/login' });
 
     // On est bien sur /login
-    expect(screen).toHavePathnameWithParams('/login');
+    expect(app.getPathnameWithParams()).toBe('/login');
 
     // Renseigner le formulaire
     fireEvent.changeText(
@@ -63,7 +63,7 @@ describe('Flow: Connexion -> /tabs', () => {
     });
 
     // Attendre la navigation vers /tabs
-    await waitFor(() => expect(screen).toHavePathnameWithParams('/tabs'));
+    await waitFor(() => expect(app.getPathnameWithParams()).toBe('/tabs'));
 
     // Vérifier contenu de l'écran d'accueil (Titre)
     await waitFor(() => expect(screen.getAllByText('Vos opérations').length).toBeGreaterThan(0));

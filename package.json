@@ -16,6 +16,8 @@
     "ci:prepare": "bash ./scripts/ci-prepare.sh",
     "fix:lock": "bash ./scripts/fix-lock.sh",
     "preinstall": "node ./scripts/preinstall.js",
+    "precommit": "bash ./scripts/precommit.sh",
+    "prepare": "git config core.hooksPath .githooks",
     "test": "jest",
     "test:unit": "jest --testPathIgnorePatterns=.*\\.functional\\.test\\.tsx$",
     "test:func": "jest --testPathPattern=.*\\.functional\\.test\\.tsx$"

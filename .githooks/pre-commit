@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Git will invoke this script. Delegate to our project precommit runner.
+set -euo pipefail
+DIR="$(git rev-parse --show-toplevel)"
+"$DIR/scripts/precommit.sh"
