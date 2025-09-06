@@ -22,7 +22,9 @@ export default function FormCard({ children, style, cardStyle }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // Important: ne pas forcer flex:1 à l'intérieur d'un ScrollView
+    // pour que le contenu puisse dépasser et scroller correctement.
+    alignSelf: 'stretch',
     paddingHorizontal: spacing(2),
     paddingTop: spacing(1),
   },

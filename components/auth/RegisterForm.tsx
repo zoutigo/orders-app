@@ -1,4 +1,5 @@
 import { View, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import Button from '@/components/ui/Button';
 import { router } from 'expo-router';
@@ -23,7 +24,7 @@ export default function RegisterForm() {
   const users = useAppStore((s) => s.users);
   const setCurrentUser = useAppStore((s) => s.setCurrentUser);
 
-  const { control, handleSubmit, formState, getValues } = useForm<RegisterFormData>({
+  const { control, handleSubmit, formState, getValues, trigger } = useForm<RegisterFormData>({
     defaultValues: {
       email: '',
       password: '',
@@ -35,6 +36,7 @@ export default function RegisterForm() {
   });
 
   const { isSubmitting, isValid } = formState;
+  const [step, setStep] = useState<1 | 2>(1);
 
   const onSubmit = (data: RegisterFormData) => {
     try {
@@ -77,87 +79,134 @@ export default function RegisterForm() {
     }
   };
 
+  const goNext = async () => {
+    const ok = await trigger(['firstname', 'lastname', 'email']);
+    if (ok) setStep(2);
+  };
+
+  const goBack = () => setStep(1);
+
   return (
     <FormCard>
-      <ThemedInputText
-        name="firstname"
-        control={control}
-        label="Prénom"
-        placeholder="Votre prénom"
-        autoCapitalize="words"
-        icon="person-outline"
-        rules={{
-          required: 'Votre prénom est requis',
-          minLength: { value: 1, message: '1 caractère minimum' },
-        }}
-      />
-      <ThemedInputText
-        name="lastname"
-        control={control}
-        label="Nom"
-        placeholder="Votre nom"
-        autoCapitalize="words"
-        icon="person-outline"
-        rules={{
-          required: 'Votre nom est requis',
-          minLength: { value: 1, message: '1 caractère minimum' },
-        }}
-      />
-      {/* Email */}
-      <ThemedInputText
-        name="email"
-        control={control}
-        label="Adresse e-mail"
-        placeholder="ex: contact@monresto.com"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        icon="mail-outline"
-        rules={{
-          required: 'L’email est requis',
-          pattern: {
-            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-            message: 'Email invalide',
-          },
-        }}
-      />
-      {/* Mot de passe */}
-      <ThemedInputText
-        name="password"
-        control={control}
-        label="Mot de passe"
-        placeholder="••••••••"
-        secureTextEntry
-        autoCapitalize="none"
-        icon="lock-closed-outline"
-        isPassword
-        rules={{
-          required: 'Le mot de passe est requis',
-          minLength: { value: 6, message: '6 caractères minimum' },
-        }}
-      />
-      <ThemedInputText
-        name="passwordConfirm"
-        control={control}
-        label="Confirmer le mot de passe"
-        placeholder="••••••••"
-        secureTextEntry
-        autoCapitalize="none"
-        icon="lock-closed-outline"
-        isPassword
-        rules={{
-          required: 'La confirmation est requise',
-          validate: (value: any) =>
-            value === getValues('password') || 'Les mots de passe ne correspondent pas',
-        }}
-      />
-      <Button
-        fullWidth
-        size="lg"
-        onPress={handleSubmit(onSubmit)}
-        disabled={isSubmitting || !isValid}
-      >
-        Inscription
-      </Button>
+      {/* Indicateur d'étape */}
+      <View style={{ marginBottom: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View
+            style={{
+              flex: 1,
+              height: 4,
+              backgroundColor: step >= 1 ? '#e74c3c' : '#eee',
+              marginRight: 6,
+              borderRadius: 2,
+            }}
+          />
+          <View
+            style={{
+              flex: 1,
+              height: 4,
+              backgroundColor: step >= 2 ? '#e74c3c' : '#eee',
+              marginLeft: 6,
+              borderRadius: 2,
+            }}
+          />
+        </View>
+      </View>
+
+      {step === 1 ? (
+        <>
+          <ThemedInputText
+            name="firstname"
+            control={control}
+            label="Prénom"
+            placeholder="Votre prénom"
+            autoCapitalize="words"
+            icon="person-outline"
+            rules={{
+              required: 'Votre prénom est requis',
+              minLength: { value: 1, message: '1 caractère minimum' },
+            }}
+          />
+          <ThemedInputText
+            name="lastname"
+            control={control}
+            label="Nom"
+            placeholder="Votre nom"
+            autoCapitalize="words"
+            icon="person-outline"
+            rules={{
+              required: 'Votre nom est requis',
+              minLength: { value: 1, message: '1 caractère minimum' },
+            }}
+          />
+          <ThemedInputText
+            name="email"
+            control={control}
+            label="Adresse e-mail"
+            placeholder="ex: contact@monresto.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            icon="mail-outline"
+            rules={{
+              required: 'L’email est requis',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Email invalide',
+              },
+            }}
+          />
+
+          <Button fullWidth size="lg" onPress={goNext} disabled={isSubmitting}>
+            Continuer
+          </Button>
+        </>
+      ) : (
+        <>
+          {/* Mot de passe */}
+          <ThemedInputText
+            name="password"
+            control={control}
+            label="Mot de passe"
+            placeholder="••••••••"
+            secureTextEntry
+            autoCapitalize="none"
+            icon="lock-closed-outline"
+            isPassword
+            rules={{
+              required: 'Le mot de passe est requis',
+              minLength: { value: 6, message: '6 caractères minimum' },
+            }}
+          />
+          <ThemedInputText
+            name="passwordConfirm"
+            control={control}
+            label="Confirmer le mot de passe"
+            placeholder="••••••••"
+            secureTextEntry
+            autoCapitalize="none"
+            icon="lock-closed-outline"
+            isPassword
+            rules={{
+              required: 'La confirmation est requise',
+              validate: (value: any) =>
+                value === getValues('password') || 'Les mots de passe ne correspondent pas',
+            }}
+          />
+
+          <View style={{ gap: 12 }}>
+            <Button
+              fullWidth
+              size="lg"
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting || !isValid}
+            >
+              Inscription
+            </Button>
+            <Button fullWidth size="md" variant="outline" onPress={goBack}>
+              Retour
+            </Button>
+          </View>
+        </>
+      )}
     </FormCard>
   );
 }
