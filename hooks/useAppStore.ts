@@ -10,7 +10,7 @@ import {
   Table,
   TableStatus,
 } from '@/types';
-import { seedCategories, seedProducts, seedTables } from '@/constants/seeds';
+import { seedCategories, seedProducts, seedTables, seedRestaurants, defaultRestaurantId } from '@/constants/seeds';
 import { Restaurant } from '@/types/restaurants';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -127,8 +127,46 @@ export const useAppStore = create<AppState>()(
       categories: seedCategories,
       products: seedProducts,
       orders: [],
-      restaurants: [],
-      users: [],
+      restaurants: seedRestaurants,
+      users: [
+        {
+          id: 'u_owner',
+          firstname: 'Owner',
+          lastname: 'One',
+          email: 'owner@restau.test',
+          password: 'secret',
+          // extra fields used in some screens (not required by type)
+          role: 'owner',
+          restaurantId: defaultRestaurantId,
+        } as any,
+        {
+          id: 'u_waiter',
+          firstname: 'Alice',
+          lastname: 'Serveuse',
+          email: 'waiter@restau.test',
+          password: 'secret',
+          role: 'waiter',
+          restaurantId: defaultRestaurantId,
+        } as any,
+        {
+          id: 'u_prep',
+          firstname: 'Bob',
+          lastname: 'Prepa',
+          email: 'prepa@restau.test',
+          password: 'secret',
+          role: 'preparator',
+          restaurantId: defaultRestaurantId,
+        } as any,
+        {
+          id: 'u_cash',
+          firstname: 'Claire',
+          lastname: 'Caisse',
+          email: 'cashier@restau.test',
+          password: 'secret',
+          role: 'cashier',
+          restaurantId: defaultRestaurantId,
+        } as any,
+      ],
       currentUserId: undefined,
       currentRestaurantId: undefined,
 
@@ -365,13 +403,17 @@ export const useAppStore = create<AppState>()(
       // Selectors
       getProductsByCategory: (categoryId) => {
         const s = get();
-        return s.products.filter((p) => p.categoryId === categoryId);
+        const rid = s.currentRestaurantId;
+        return s.products.filter((p) => p.categoryId === categoryId && (!rid || p.restaurantId === rid));
       },
 
       getProductsByCategoryCode: (code) => {
         const s = get();
         const cat = s.categories.find((c) => c.code === code);
-        return cat ? s.products.filter((p) => p.categoryId === cat.id) : [];
+        const rid = s.currentRestaurantId;
+        return cat
+          ? s.products.filter((p) => p.categoryId === cat.id && (!rid || p.restaurantId === rid))
+          : [];
       },
 
       getOrderTotal: (orderId) => {
@@ -386,12 +428,17 @@ export const useAppStore = create<AppState>()(
 
       resetAll: () =>
         set(() => ({
-          tables: [],
+          tables: seedTables,
           categories: seedCategories,
           products: seedProducts,
           orders: [],
-          restaurants: [],
-          users: [],
+          restaurants: seedRestaurants,
+          users: [
+            { id: 'u_owner', firstname: 'Owner', lastname: 'One', email: 'owner@restau.test', password: 'secret' } as any,
+            { id: 'u_waiter', firstname: 'Alice', lastname: 'Serveuse', email: 'waiter@restau.test', password: 'secret' } as any,
+            { id: 'u_prep', firstname: 'Bob', lastname: 'Prepa', email: 'prepa@restau.test', password: 'secret' } as any,
+            { id: 'u_cash', firstname: 'Claire', lastname: 'Caisse', email: 'cashier@restau.test', password: 'secret' } as any,
+          ],
           currentUserId: undefined,
           currentRestaurantId: undefined,
         })),

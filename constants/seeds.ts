@@ -1,5 +1,6 @@
 // constants/seeds.ts
 import { Category, Product, Table } from '@/types';
+import { Restaurant } from '@/types/restaurants';
 
 // ---- CATEGORIES ----
 export const seedCategories: Category[] = [
@@ -12,6 +13,17 @@ export const seedCategories: Category[] = [
 ];
 
 export const defaultRestaurantId = 'seed-resto-1';
+
+// ---- RESTAURANTS ----
+export const seedRestaurants: Restaurant[] = [
+  {
+    id: defaultRestaurantId,
+    name: 'Restau-Test',
+    specialty: 'Cuisine maison',
+    address: '1 rue des Tests, 75000 Paris',
+    description: 'Restaurant de démonstration avec données seeds',
+  },
+];
 
 // ---- PRODUCTS ----
 export const seedProducts: Product[] = [
@@ -629,4 +641,37 @@ export const seedProducts: Product[] = [
 ];
 
 // ---- TABLES ----
-export const seedTables: Table[] = [];
+export const seedTables: Table[] = [
+  {
+    id: 't-1',
+    name: 'Table 1',
+    status: 'LIBRE',
+    seats: 2,
+    isUsable: true,
+    restaurantId: defaultRestaurantId,
+  },
+  {
+    id: 't-2',
+    name: 'Table 2',
+    status: 'LIBRE',
+    seats: 4,
+    isUsable: true,
+    restaurantId: defaultRestaurantId,
+  },
+  {
+    id: 't-3',
+    name: 'Table 3',
+    status: 'OCCUPEE',
+    seats: 4,
+    isUsable: true,
+    restaurantId: defaultRestaurantId,
+  },
+  {
+    id: 't-4',
+    name: 'Table 4',
+    status: 'INDISPONIBLE',
+    seats: 6,
+    isUsable: false,
+    restaurantId: defaultRestaurantId,
+  },
+];

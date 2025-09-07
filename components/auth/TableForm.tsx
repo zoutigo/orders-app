@@ -136,6 +136,7 @@ export default function TableForm({
               <Picker.Item label="Libre" value="LIBRE" />
               <Picker.Item label="Occupée" value="OCCUPEE" />
               <Picker.Item label="En service" value="EN_SERVICE" />
+              <Picker.Item label="Indisponible" value="INDISPONIBLE" />
             </Picker>
           </View>
         )}
