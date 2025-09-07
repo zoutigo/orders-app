@@ -28,7 +28,8 @@ export default function ProductsIndex() {
     ]);
   };
 
-  const getCategoryName = (categoryId: string) => categories.find((c) => c.id === categoryId)?.name ?? '—';
+  const getCategoryName = (categoryId: string) =>
+    categories.find((c) => c.id === categoryId)?.name ?? '—';
 
   const availColor = (ok: boolean) => (ok ? C.success : C.danger);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -47,16 +48,23 @@ export default function ProductsIndex() {
   );
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: C.background }} contentContainerStyle={{ padding: spacing(2), paddingBottom: spacing(6) }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: C.background }}
+      contentContainerStyle={{ padding: spacing(2), paddingBottom: spacing(6) }}
+    >
       {/* Hero compact */}
-      <View style={[styles.header, { backgroundColor: C.brand }]}> 
+      <View style={[styles.header, { backgroundColor: C.brand }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: spacing(1.25) }}>
           <View style={styles.heroIcon}>
             <Ionicons name="pricetag-outline" size={22} color={C.neutral0} />
           </View>
           <View style={{ flex: 1 }}>
-            <ThemedText type="defaultSemiBold" style={{ color: C.neutral0, fontSize: 18 }}>Produits</ThemedText>
-            <ThemedText style={{ color: 'rgba(255,255,255,0.95)' }}>{products.length} produit(s) configuré(s)</ThemedText>
+            <ThemedText type="defaultSemiBold" style={{ color: C.neutral0, fontSize: 18 }}>
+              Produits
+            </ThemedText>
+            <ThemedText style={{ color: 'rgba(255,255,255,0.95)' }}>
+              {products.length} produit(s) configuré(s)
+            </ThemedText>
           </View>
         </View>
         <IconButton
@@ -74,12 +82,18 @@ export default function ProductsIndex() {
       </View>
 
       {/* Filtres catégories */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing(1) }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginBottom: spacing(1) }}
+      >
         <Pressable
           onPress={() => setSelectedCatId(undefined)}
           style={[styles.catChip, selectedCatId === undefined && { backgroundColor: C.brand }]}
         >
-          <ThemedText style={{ color: selectedCatId === undefined ? C.neutral0 : C.muted }}>Toutes</ThemedText>
+          <ThemedText style={{ color: selectedCatId === undefined ? C.neutral0 : C.muted }}>
+            Toutes
+          </ThemedText>
         </Pressable>
         {categories.map((cat) => (
           <Pressable
@@ -87,7 +101,9 @@ export default function ProductsIndex() {
             onPress={() => setSelectedCatId(cat.id)}
             style={[styles.catChip, selectedCatId === cat.id && { backgroundColor: C.brand }]}
           >
-            <ThemedText style={{ color: selectedCatId === cat.id ? C.neutral0 : C.muted }}>{cat.name}</ThemedText>
+            <ThemedText style={{ color: selectedCatId === cat.id ? C.neutral0 : C.muted }}>
+              {cat.name}
+            </ThemedText>
           </Pressable>
         ))}
       </ScrollView>
@@ -117,46 +133,57 @@ export default function ProductsIndex() {
                   <ThemedText type="defaultSemiBold" style={{ color: C.text, flex: 1 }}>
                     {p.name}
                   </ThemedText>
-                  <ThemedText style={{ color: C.muted, fontSize: 12 }}>{getCategoryName(p.categoryId)}</ThemedText>
+                  <ThemedText style={{ color: C.muted, fontSize: 12 }}>
+                    {getCategoryName(p.categoryId)}
+                  </ThemedText>
                 </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing(1), marginTop: 4 }}>
-                <View style={[styles.chip, { borderColor: C.border, backgroundColor: C.surface }]}>
-                  <Ionicons name="cash-outline" size={14} color={C.muted} />
-                  <ThemedText style={{ color: C.muted, fontSize: 12 }}>{p.price} FCFA</ThemedText>
-                </View>
-                <View style={{ flex: 1 }} />
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <IconButton
-                    testID={`product-view-${p.id}`}
-                    icon="eye-outline"
-                    variant="outline"
-                    onPress={() =>
-                      router.push({
-                        pathname: '/restaurant/[id]/(tabs)/params/products/[productId]',
-                        params: { id: currentRestaurantId!, productId: p.id },
-                      })
-                    }
-                  />
-                  <IconButton
-                    testID={`product-edit-${p.id}`}
-                    icon="create-outline"
-                    variant="outline"
-                    onPress={() =>
-                      router.push({
-                        pathname: '/restaurant/[id]/(tabs)/params/products/[productId]/edit',
-                        params: { id: currentRestaurantId!, productId: p.id },
-                      })
-                    }
-                  />
-                  <IconButton
-                    testID={`product-delete-${p.id}`}
-                    icon="trash-outline"
-                    variant="danger"
-                    onPress={() => handleAskDelete(p.id)}
-                  />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing(1),
+                    marginTop: 4,
+                  }}
+                >
+                  <View
+                    style={[styles.chip, { borderColor: C.border, backgroundColor: C.surface }]}
+                  >
+                    <Ionicons name="cash-outline" size={14} color={C.muted} />
+                    <ThemedText style={{ color: C.muted, fontSize: 12 }}>{p.price} FCFA</ThemedText>
+                  </View>
+                  <View style={{ flex: 1 }} />
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <IconButton
+                      testID={`product-view-${p.id}`}
+                      icon="eye-outline"
+                      variant="outline"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/restaurant/[id]/(tabs)/params/products/[productId]',
+                          params: { id: currentRestaurantId!, productId: p.id },
+                        })
+                      }
+                    />
+                    <IconButton
+                      testID={`product-edit-${p.id}`}
+                      icon="create-outline"
+                      variant="outline"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/restaurant/[id]/(tabs)/params/products/[productId]/edit',
+                          params: { id: currentRestaurantId!, productId: p.id },
+                        })
+                      }
+                    />
+                    <IconButton
+                      testID={`product-delete-${p.id}`}
+                      icon="trash-outline"
+                      variant="danger"
+                      onPress={() => handleAskDelete(p.id)}
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
             </Pressable>
           ))}
         </View>

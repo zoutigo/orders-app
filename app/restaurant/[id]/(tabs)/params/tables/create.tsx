@@ -1,11 +1,5 @@
 import { useEffect } from 'react';
-import {
-  ScrollView,
-  ActivityIndicator,
-  View,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { ScrollView, ActivityIndicator, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useAppStore } from '@/hooks/useAppStore';
 import TableForm from '@/components/auth/TableForm';

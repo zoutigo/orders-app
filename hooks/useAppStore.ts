@@ -10,7 +10,13 @@ import {
   Table,
   TableStatus,
 } from '@/types';
-import { seedCategories, seedProducts, seedTables, seedRestaurants, defaultRestaurantId } from '@/constants/seeds';
+import {
+  seedCategories,
+  seedProducts,
+  seedTables,
+  seedRestaurants,
+  defaultRestaurantId,
+} from '@/constants/seeds';
 import { Restaurant } from '@/types/restaurants';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -404,7 +410,9 @@ export const useAppStore = create<AppState>()(
       getProductsByCategory: (categoryId) => {
         const s = get();
         const rid = s.currentRestaurantId;
-        return s.products.filter((p) => p.categoryId === categoryId && (!rid || p.restaurantId === rid));
+        return s.products.filter(
+          (p) => p.categoryId === categoryId && (!rid || p.restaurantId === rid),
+        );
       },
 
       getProductsByCategoryCode: (code) => {
@@ -434,10 +442,34 @@ export const useAppStore = create<AppState>()(
           orders: [],
           restaurants: seedRestaurants,
           users: [
-            { id: 'u_owner', firstname: 'Owner', lastname: 'One', email: 'owner@restau.test', password: 'secret' } as any,
-            { id: 'u_waiter', firstname: 'Alice', lastname: 'Serveuse', email: 'waiter@restau.test', password: 'secret' } as any,
-            { id: 'u_prep', firstname: 'Bob', lastname: 'Prepa', email: 'prepa@restau.test', password: 'secret' } as any,
-            { id: 'u_cash', firstname: 'Claire', lastname: 'Caisse', email: 'cashier@restau.test', password: 'secret' } as any,
+            {
+              id: 'u_owner',
+              firstname: 'Owner',
+              lastname: 'One',
+              email: 'owner@restau.test',
+              password: 'secret',
+            } as any,
+            {
+              id: 'u_waiter',
+              firstname: 'Alice',
+              lastname: 'Serveuse',
+              email: 'waiter@restau.test',
+              password: 'secret',
+            } as any,
+            {
+              id: 'u_prep',
+              firstname: 'Bob',
+              lastname: 'Prepa',
+              email: 'prepa@restau.test',
+              password: 'secret',
+            } as any,
+            {
+              id: 'u_cash',
+              firstname: 'Claire',
+              lastname: 'Caisse',
+              email: 'cashier@restau.test',
+              password: 'secret',
+            } as any,
           ],
           currentUserId: undefined,
           currentRestaurantId: undefined,

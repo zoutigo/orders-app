@@ -56,14 +56,12 @@ export default function TableDetail() {
           <ThemedText type="defaultSemiBold" style={{ color: C.neutral0, fontSize: 18 }}>
             {table.name}
           </ThemedText>
-          <ThemedText style={{ color: 'rgba(255,255,255,0.95)' }}>
-            Détails de la table
-          </ThemedText>
+          <ThemedText style={{ color: 'rgba(255,255,255,0.95)' }}>Détails de la table</ThemedText>
         </View>
       </View>
 
       {/* Card de contenu */}
-      <View style={[styles.card, { backgroundColor: C.card, borderColor: C.border }]}> 
+      <View style={[styles.card, { backgroundColor: C.card, borderColor: C.border }]}>
         <Row label="Statut" value={table.status} />
         <Row label="Places" value={`${table.seats}`} />
         <Row label="Description" value={table.description || '—'} />

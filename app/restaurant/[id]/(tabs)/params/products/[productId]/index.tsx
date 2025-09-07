@@ -57,15 +57,16 @@ export default function ProductDetail() {
           <ThemedText type="defaultSemiBold" style={{ color: C.neutral0, fontSize: 18 }}>
             {product.name}
           </ThemedText>
-          <ThemedText style={{ color: 'rgba(255,255,255,0.95)' }}>
-            Détails du produit
-          </ThemedText>
+          <ThemedText style={{ color: 'rgba(255,255,255,0.95)' }}>Détails du produit</ThemedText>
         </View>
       </View>
 
       {/* Card de contenu */}
-      <View style={[styles.card, { backgroundColor: C.card, borderColor: C.border }]}> 
-        <Row label="Catégorie" value={categories.find((c) => c.id === product.categoryId)?.name ?? '—'} />
+      <View style={[styles.card, { backgroundColor: C.card, borderColor: C.border }]}>
+        <Row
+          label="Catégorie"
+          value={categories.find((c) => c.id === product.categoryId)?.name ?? '—'}
+        />
         <Row label="Prix" value={`${product.price} FCFA`} />
         <Row label="Disponible" value={product.isAvailable ? 'Oui' : 'Non'} />
         <Row label="Description" value={product.description || '—'} />

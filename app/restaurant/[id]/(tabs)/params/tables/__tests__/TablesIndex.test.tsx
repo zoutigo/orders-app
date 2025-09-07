@@ -19,7 +19,14 @@ const mockSet = jest.fn();
 const tablesSeed = [
   { id: 't-1', name: 'Table 1', status: 'LIBRE', seats: 2, isUsable: true, restaurantId: 'r1' },
   { id: 't-2', name: 'Table 2', status: 'OCCUPEE', seats: 4, isUsable: true, restaurantId: 'r1' },
-  { id: 't-3', name: 'Table 3', status: 'INDISPONIBLE', seats: 6, isUsable: false, restaurantId: 'r1' },
+  {
+    id: 't-3',
+    name: 'Table 3',
+    status: 'INDISPONIBLE',
+    seats: 6,
+    isUsable: false,
+    restaurantId: 'r1',
+  },
 ];
 
 jest.mock('@/hooks/useAppStore', () => ({
