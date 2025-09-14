@@ -3,7 +3,6 @@
 // - Works in two modes: server (maître) and client.
 // - If tcp module is not available (Expo managed without plugin), methods no-op gracefully.
 
-
 type ActionName =
   | 'createOrder'
   | 'setOrderPaid'
@@ -61,7 +60,9 @@ class _SyncManager {
       socket.on('data', (data: any) => this.handleRaw(data, socket));
       socket.on('error', () => {});
       socket.on('close', () => {
-        try { this.clients.delete(socket); } catch {}
+        try {
+          this.clients.delete(socket);
+        } catch {}
       });
     });
     await new Promise<void>((resolve, reject) => {
@@ -79,7 +80,9 @@ class _SyncManager {
     }
     this.isServer = false;
     this.clients.forEach((c) => {
-      try { c.destroy?.(); } catch {}
+      try {
+        c.destroy?.();
+      } catch {}
     });
     this.clients.clear();
   }
@@ -146,7 +149,9 @@ class _SyncManager {
       const s = JSON.stringify(msg);
       this.clients.forEach((c) => {
         if (except && c === except) return;
-        try { c.write(s); } catch {}
+        try {
+          c.write(s);
+        } catch {}
       });
     } catch {}
   }

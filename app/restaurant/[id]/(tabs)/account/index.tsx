@@ -196,12 +196,14 @@ export default function RestaurantDisconnect() {
                 <View
                   key={id}
                   style={{
-                    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     paddingVertical: 6,
                   }}
                 >
                   <ThemedText style={{ color: id === deviceId ? C.brand : C.text }}>
-                    {(deviceNames?.[id] || `Device-${id.slice(-4)}`)} • {id === deviceId ? 'moi' : id}
+                    {deviceNames?.[id] || `Device-${id.slice(-4)}`} • {id === deviceId ? 'moi' : id}
                   </ThemedText>
                   <Button
                     size="sm"

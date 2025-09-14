@@ -61,9 +61,10 @@ export default function OperationsIndex() {
     { key: 'supervisor', label: 'Superviseur', icon: 'bar-chart-outline', desc: 'Vue d’ensemble' },
   ];
 
-  const userRole = currentRestaurantId && currentUserId
-    ? getUserRoleForRestaurant(currentUserId, currentRestaurantId)
-    : undefined;
+  const userRole =
+    currentRestaurantId && currentUserId
+      ? getUserRoleForRestaurant(currentUserId, currentRestaurantId)
+      : undefined;
 
   const roles = allRoles.filter((r) => {
     if (!userRole) return true; // fallback: montre tout si pas configuré
