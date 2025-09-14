@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -11,17 +11,35 @@ import ToolbarSpacer from '@/components/ui/ToolbarSpacer';
 import Colors from '@/constants/Colors';
 import { spacing, radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ThemedInputBase } from '@/components/ui/ThemedInputText';
+import { Zeroconf } from '@/services/sync/Zeroconf';
 
 export default function RestaurantDisconnect() {
   const logout = useAppStore((s) => s.logout);
   const setCurrentRestaurant = useAppStore((s) => s.setCurrentRestaurant);
   const user = useAppStore((s) => s.users.find((u) => u.id === s.currentUserId));
+  const currentRestaurantId = useAppStore((s) => s.currentRestaurantId);
+  const getUserRoleForRestaurant = useAppStore((s) => s.getUserRoleForRestaurant as any);
+
+  const deviceId = useAppStore((s) => s.deviceId);
+  const masterDeviceId = useAppStore((s) => s.masterDeviceId);
+  const socketStatus = useAppStore((s) => s.socketStatus as any);
+  const serverHost = useAppStore((s) => s.serverHost);
+  const serverPort = useAppStore((s) => s.serverPort);
+  const setServerAddress = useAppStore((s) => s.setServerAddress);
+  const startAsMaster = useAppStore((s) => s.startAsMaster);
+  const connectToMaster = useAppStore((s) => s.connectToMaster);
+  const connectedDevices = useAppStore((s) => s.connectedDevices);
+  const deviceNames = useAppStore((s) => s.connectedDeviceNames);
+  const setMasterDevice = useAppStore((s) => s.setMasterDevice);
 
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
 
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [hostInput, setHostInput] = useState(serverHost ?? '');
+  const [portInput, setPortInput] = useState(String(serverPort ?? 5555));
 
   const handleRestaurantDisconnect = () => {
     setCurrentRestaurant(undefined);
@@ -72,6 +90,130 @@ export default function RestaurantDisconnect() {
               <ThemedText style={{ color: C.muted }}>{user?.email ?? '—'}</ThemedText>
             </View>
           </View>
+        </View>
+      </View>
+
+      {/* --------- Sync / Socket --------- */}
+      <View style={{ padding: spacing(2), paddingTop: 0 }}>
+        <View
+          style={{
+            backgroundColor: C.card,
+            borderWidth: 1,
+            borderColor: C.border,
+            borderRadius: radius.lg,
+            padding: spacing(1.5),
+            marginBottom: spacing(2),
+            gap: spacing(1),
+          }}
+        >
+          <ThemedText type="defaultSemiBold">Synchronisation locale</ThemedText>
+          <ThemedText style={{ color: C.muted }}>
+            Statut: {socketStatus} • Appareil: {deviceId}
+          </ThemedText>
+          <ThemedText style={{ color: C.muted }}>
+            Maître: {masterDeviceId ? masterDeviceId : 'non défini'}
+          </ThemedText>
+
+          <View style={{ height: spacing(1) }} />
+
+          <ThemedInputBase
+            label="Adresse IP du maître"
+            value={hostInput}
+            onChangeText={(t) => setHostInput(t)}
+            placeholder="ex: 192.168.1.10"
+            autoCapitalize="none"
+            icon="wifi-outline"
+          />
+          <ThemedInputBase
+            label="Port"
+            value={portInput}
+            onChangeText={(t) => setPortInput(t.replace(/[^0-9]/g, ''))}
+            keyboardType="number-pad"
+            placeholder="5555"
+            icon="git-network-outline"
+          />
+
+          <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+            <Button
+              fullWidth
+              size="md"
+              variant="outline"
+              leftIcon="radio-button-on-outline"
+              onPress={async () => {
+                const p = parseInt(portInput || '5555', 10) || 5555;
+                setServerAddress(hostInput || '', p);
+                await connectToMaster();
+              }}
+            >
+              Se connecter au maître
+            </Button>
+            <Button
+              fullWidth
+              size="md"
+              leftIcon="server-outline"
+              onPress={async () => {
+                await startAsMaster();
+              }}
+            >
+              Démarrer comme maître
+            </Button>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+            <Button
+              fullWidth
+              size="md"
+              variant="ghost"
+              leftIcon="search-outline"
+              onPress={() => {
+                Zeroconf.startBrowsing((svc) => {
+                  const addr = svc.addresses?.[0] || svc.host;
+                  if (addr && svc.port) {
+                    setHostInput(addr);
+                    setPortInput(String(svc.port));
+                    setServerAddress(addr, svc.port);
+                  }
+                });
+              }}
+            >
+              Découvrir le maître (mDNS)
+            </Button>
+          </View>
+
+          {currentRestaurantId && user ? (
+            <ThemedText style={{ color: C.muted }}>
+              Rôle: {getUserRoleForRestaurant(user.id, currentRestaurantId) ?? '—'}
+            </ThemedText>
+          ) : null}
+
+          {/* Connected devices (maître visibility or all) */}
+          {connectedDevices.length > 0 && (
+            <View style={{ marginTop: spacing(1) }}>
+              <ThemedText type="defaultSemiBold" style={{ marginBottom: 4 }}>
+                Appareils connectés
+              </ThemedText>
+              {connectedDevices.map((id) => (
+                <View
+                  key={id}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                    paddingVertical: 6,
+                  }}
+                >
+                  <ThemedText style={{ color: id === deviceId ? C.brand : C.text }}>
+                    {(deviceNames?.[id] || `Device-${id.slice(-4)}`)} • {id === deviceId ? 'moi' : id}
+                  </ThemedText>
+                  <Button
+                    size="sm"
+                    variant={masterDeviceId === id ? 'primary' : 'outline'}
+                    onPress={() => setMasterDevice(id)}
+                  >
+                    {masterDeviceId === id ? 'Maître' : 'Définir maître'}
+                  </Button>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </View>
 

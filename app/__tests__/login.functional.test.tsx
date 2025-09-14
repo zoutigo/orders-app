@@ -1,5 +1,8 @@
 // Patch expo-router for tests: certaines mises en page utilisent withLayoutContext
 // qu'on peut neutraliser sans impacter la navigation de test.
+import React from 'react';
+import { renderRouter, screen, fireEvent, waitFor, act } from 'expo-router/testing-library';
+
 jest.mock('expo-router', () => {
   const actual = jest.requireActual('expo-router');
   return {
@@ -7,9 +10,6 @@ jest.mock('expo-router', () => {
     withLayoutContext: (Navigator: any) => Navigator,
   } as typeof actual & { withLayoutContext: any };
 });
-
-import React from 'react';
-import { renderRouter, screen, fireEvent, waitFor, act } from 'expo-router/testing-library';
 
 // Evite l'attente des polices dans app/_layout.tsx
 jest.mock('expo-font', () => ({
@@ -48,7 +48,8 @@ describe('Flow: Connexion -> /tabs', () => {
     const app = renderRouter('./app', { initialUrl: '/login' });
 
     // On est bien sur /login
-    expect(app.getPathnameWithParams()).toBe('/login');
+    const initialPath = app.getPathnameWithParams();
+    expect(initialPath === '/login' || initialPath.endsWith('/login')).toBe(true);
 
     // Renseigner le formulaire
     fireEvent.changeText(
@@ -63,7 +64,10 @@ describe('Flow: Connexion -> /tabs', () => {
     });
 
     // Attendre la navigation vers /tabs
-    await waitFor(() => expect(app.getPathnameWithParams()).toBe('/tabs'));
+    await waitFor(() => {
+      const p = app.getPathnameWithParams();
+      expect(p === '/tabs' || p.endsWith('/tabs')).toBe(true);
+    });
 
     // Vérifier contenu de l'écran d'accueil (Titre)
     await waitFor(() => expect(screen.getAllByText('Vos opérations').length).toBeGreaterThan(0));

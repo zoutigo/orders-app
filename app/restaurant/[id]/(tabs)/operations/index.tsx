@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '@/components/ui/Button';
@@ -9,6 +9,7 @@ import { spacing, radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { router, type Href } from 'expo-router';
 import { useAppStore } from '@/hooks/useAppStore';
+import { Zeroconf } from '@/services/sync/Zeroconf';
 
 type RoleKey = 'waiter' | 'preparation' | 'cashier' | 'supervisor';
 
@@ -40,10 +41,15 @@ function hrefForRole(role: RoleKey, id: string): Href {
 
 export default function OperationsIndex() {
   const currentRestaurantId = useAppStore((s) => s.currentRestaurantId);
+  const currentUserId = useAppStore((s) => s.currentUserId);
+  const getUserRoleForRestaurant = useAppStore((s) => s.getUserRoleForRestaurant as any);
+  const socketStatus = useAppStore((s) => s.socketStatus as any);
+  const connectToMaster = useAppStore((s) => s.connectToMaster);
+  const setServerAddress = useAppStore((s) => s.setServerAddress);
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
 
-  const roles: {
+  const allRoles: {
     key: RoleKey;
     label: string;
     icon: keyof typeof Ionicons.glyphMap;
@@ -55,13 +61,44 @@ export default function OperationsIndex() {
     { key: 'supervisor', label: 'Superviseur', icon: 'bar-chart-outline', desc: 'Vue d’ensemble' },
   ];
 
+  const userRole = currentRestaurantId && currentUserId
+    ? getUserRoleForRestaurant(currentUserId, currentRestaurantId)
+    : undefined;
+
+  const roles = allRoles.filter((r) => {
+    if (!userRole) return true; // fallback: montre tout si pas configuré
+    if (userRole === 'owner' || userRole === 'supervisor') return true;
+    if (userRole === 'waiter') return r.key === 'waiter';
+    if (userRole === 'cashier') return r.key === 'cashier';
+    if (userRole === 'preparator') return r.key === 'preparation';
+    return true;
+  });
+
   const onOpenRole = useCallback(
     (role: RoleKey) => {
       if (!currentRestaurantId) return;
+      // Option: auto-connexion si paramétré
+      if (socketStatus !== 'connected') {
+        connectToMaster().catch(() => {});
+      }
       router.push(hrefForRole(role, currentRestaurantId));
     },
-    [currentRestaurantId],
+    [currentRestaurantId, socketStatus, connectToMaster],
   );
+
+  // Auto discovery mDNS when opening this screen
+  useEffect(() => {
+    if (socketStatus === 'connected') return;
+    Zeroconf.startBrowsing((svc) => {
+      const addr = svc.addresses?.[0] || svc.host;
+      if (addr && svc.port) {
+        setServerAddress(addr, svc.port);
+      }
+    });
+    return () => {
+      Zeroconf.stopBrowsing();
+    };
+  }, [socketStatus, setServerAddress]);
 
   if (!currentRestaurantId) {
     // Si jamais il n'y a pas de restaurant sélectionné, on peut rediriger ou afficher un message

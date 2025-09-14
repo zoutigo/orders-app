@@ -22,6 +22,9 @@ import { Restaurant } from '@/types/restaurants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { Zeroconf } from '@/services/sync/Zeroconf';
+import Constants from 'expo-constants';
+import { SyncManager } from '@/services/sync/SyncManager';
 
 const isoNow = () => new Date().toISOString();
 const uid = (p = '') => `${p}${Math.random().toString(36).slice(2, 9)}`;
@@ -30,13 +33,32 @@ const isOrderActiveForTable = (o: Order) => o.status !== 'SERVIE';
 export const computeOrderTotal = (order: Order) =>
   order.items.reduce((sum, it) => sum + it.price * it.qty, 0);
 
+export type Role = 'owner' | 'supervisor' | 'waiter' | 'cashier' | 'preparator';
+
 type User = {
   id: string;
   firstname: string;
   lastname: string;
   email: string;
   password: string;
+  role?: Role | string;
+  restaurantId?: string;
 };
+
+type MembershipStatus = 'pending' | 'accepted' | 'revoked';
+
+type Membership = {
+  id: string;
+  restaurantId: string;
+  userId: string;
+  role: Role;
+  status: MembershipStatus;
+  approvedBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+type SocketStatus = 'disabled' | 'disconnected' | 'connecting' | 'connected' | 'error';
 
 type AppState = {
   restaurants: Restaurant[];
@@ -53,6 +75,13 @@ type AppState = {
   removeUser: (_id: string) => void;
   setCurrentUser: (_id: string) => void;
   logout: () => void;
+
+  // Memberships & rôles
+  memberships: Membership[];
+  requestJoinRestaurant: (_restaurantId: string, _userId: string) => void;
+  approveMembership: (_membershipId: string, _role: Role, _approvedBy: string) => void;
+  revokeMembership: (_membershipId: string) => void;
+  getUserRoleForRestaurant: (_userId: string, _restaurantId: string) => Role | undefined;
 
   // Restaurants (manquants auparavant)
   addRestaurant: (_resto: Restaurant) => void;
@@ -98,10 +127,28 @@ type AppState = {
   _hydrated?: boolean;
   hydrateDone: () => void;
   resetAll: () => void;
+
+  // Sync / Socket & maître
+  deviceId: string;
+  masterDeviceId?: string;
+  socketStatus: SocketStatus;
+  serverHost?: string;
+  serverPort: number;
+  setServerAddress: (_host: string, _port?: number) => void;
+  setMasterDevice: (_deviceId?: string) => void;
+  setSocketStatus: (_status: SocketStatus) => void;
+  startAsMaster: () => Promise<void>;
+  connectToMaster: () => Promise<void>;
+
+  // Devices connectés (côté maître)
+  connectedDevices: string[];
+  connectedDeviceNames: Record<string, string>;
+  upsertConnectedDevice: (_id: string, _name?: string) => void;
+  applySnapshot: (_data: Partial<PersistedSlice>) => void;
 };
 
 // ----- Persist config
-const STORE_VERSION = 6;
+const STORE_VERSION = 7;
 
 type PersistedSlice = Pick<
   AppState,
@@ -113,6 +160,11 @@ type PersistedSlice = Pick<
   | 'users'
   | 'currentUserId'
   | 'currentRestaurantId'
+  | 'memberships'
+  | 'deviceId'
+  | 'masterDeviceId'
+  | 'serverHost'
+  | 'serverPort'
 >;
 
 const persistSelector = (state: AppState): PersistedSlice => ({
@@ -124,6 +176,11 @@ const persistSelector = (state: AppState): PersistedSlice => ({
   users: state.users,
   currentUserId: state.currentUserId,
   currentRestaurantId: state.currentRestaurantId,
+  memberships: state.memberships,
+  deviceId: state.deviceId,
+  masterDeviceId: state.masterDeviceId,
+  serverHost: state.serverHost,
+  serverPort: state.serverPort,
 });
 
 export const useAppStore = create<AppState>()(
@@ -173,8 +230,53 @@ export const useAppStore = create<AppState>()(
           restaurantId: defaultRestaurantId,
         } as any,
       ],
+      memberships: [
+        {
+          id: 'm_owner',
+          restaurantId: defaultRestaurantId,
+          userId: 'u_owner',
+          role: 'owner',
+          status: 'accepted',
+          approvedBy: 'u_owner',
+          createdAt: isoNow(),
+        },
+        {
+          id: 'm_waiter',
+          restaurantId: defaultRestaurantId,
+          userId: 'u_waiter',
+          role: 'waiter',
+          status: 'accepted',
+          approvedBy: 'u_owner',
+          createdAt: isoNow(),
+        },
+        {
+          id: 'm_prep',
+          restaurantId: defaultRestaurantId,
+          userId: 'u_prep',
+          role: 'preparator',
+          status: 'accepted',
+          approvedBy: 'u_owner',
+          createdAt: isoNow(),
+        },
+        {
+          id: 'm_cash',
+          restaurantId: defaultRestaurantId,
+          userId: 'u_cash',
+          role: 'cashier',
+          status: 'accepted',
+          approvedBy: 'u_owner',
+          createdAt: isoNow(),
+        },
+      ],
       currentUserId: undefined,
       currentRestaurantId: undefined,
+      deviceId: `dev_${Math.random().toString(36).slice(2, 10)}`,
+      masterDeviceId: undefined,
+      socketStatus: 'disabled',
+      serverHost: undefined,
+      serverPort: 5555,
+      connectedDevices: [],
+      connectedDeviceNames: {},
 
       // Users
       addUser: (user) =>
@@ -189,6 +291,45 @@ export const useAppStore = create<AppState>()(
       setCurrentUser: (id) => set({ currentUserId: id }),
       logout: () => set({ currentUserId: undefined, currentRestaurantId: undefined }),
 
+      // Memberships & rôles
+      requestJoinRestaurant: (restaurantId, userId) =>
+        set((s) => ({
+          memberships: [
+            ...s.memberships,
+            {
+              id: uid('m_'),
+              restaurantId,
+              userId,
+              role: 'waiter',
+              status: 'pending',
+              createdAt: isoNow(),
+            },
+          ],
+        })),
+      approveMembership: (membershipId, role, approvedBy) =>
+        set((s) => ({
+          memberships: s.memberships.map((m) =>
+            m.id === membershipId
+              ? { ...m, role, status: 'accepted', approvedBy, updatedAt: isoNow() }
+              : m,
+          ),
+        })),
+      revokeMembership: (membershipId) =>
+        set((s) => ({
+          memberships: s.memberships.map((m) =>
+            m.id === membershipId ? { ...m, status: 'revoked', updatedAt: isoNow() } : m,
+          ),
+        })),
+      getUserRoleForRestaurant: (userId, restaurantId) => {
+        const m = get().memberships.find(
+          (x) => x.userId === userId && x.restaurantId === restaurantId && x.status === 'accepted',
+        );
+        if (m) return m.role;
+        const u = get().users.find((x) => x.id === userId) as any;
+        if (u?.restaurantId === restaurantId && u?.role) return u.role as any;
+        return undefined;
+      },
+
       // Restaurants
       addRestaurant: (resto) =>
         set((s) => ({
@@ -200,7 +341,19 @@ export const useAppStore = create<AppState>()(
         })),
       deleteRestaurant: (id) =>
         set((s) => ({ restaurants: s.restaurants.filter((r) => r.id !== id) })),
-      setCurrentRestaurant: (id) => set({ currentRestaurantId: id }),
+      setCurrentRestaurant: (id) => {
+        set({ currentRestaurantId: id });
+        const userId = get().currentUserId;
+        if (id && userId) {
+          const exists = get().memberships?.some(
+            (m) => m.restaurantId === id && m.userId === userId && m.status !== 'revoked',
+          );
+          if (!exists) {
+            // Première entrée: crée une demande d’adhésion en attente
+            get().requestJoinRestaurant(id, userId);
+          }
+        }
+      },
       disconnectRestaurant: () => set({ currentRestaurantId: undefined }),
 
       // Tables
@@ -245,6 +398,14 @@ export const useAppStore = create<AppState>()(
           restaurantId,
         };
         set((s) => ({ orders: [order, ...s.orders] }));
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction(
+            'createOrder',
+            [restaurantId, tableId ?? undefined],
+            get().deviceId,
+          );
+        }
         return orderId;
       },
       // --- Dans le create(...) du store, aux côtés des autres actions
@@ -253,6 +414,10 @@ export const useAppStore = create<AppState>()(
         set({
           orders: s.orders.map((o) => (o.id === orderId ? { ...o, isPaid } : o)),
         });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('setOrderPaid', [orderId, isPaid], get().deviceId);
+        }
       },
 
       deleteOrder: (orderId) => {
@@ -278,6 +443,10 @@ export const useAppStore = create<AppState>()(
         }
 
         set({ orders: remaining, tables: nextTables });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('deleteOrder', [orderId], get().deviceId);
+        }
       },
 
       addItemToOrder: (orderId, productId, qty = 1) => {
@@ -309,6 +478,10 @@ export const useAppStore = create<AppState>()(
         set({
           orders: s.orders.map((o) => (o.id === orderId ? { ...o, items: newItems } : o)),
         });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('addItemToOrder', [orderId, productId, qty], get().deviceId);
+        }
       },
 
       updateItemQty: (orderId, orderItemId, qty) => {
@@ -326,6 +499,10 @@ export const useAppStore = create<AppState>()(
               : o,
           ),
         });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('updateItemQty', [orderId, orderItemId, qty], get().deviceId);
+        }
       },
 
       removeItemFromOrder: (orderId, orderItemId) => {
@@ -335,6 +512,10 @@ export const useAppStore = create<AppState>()(
             o.id === orderId ? { ...o, items: o.items.filter((it) => it.id !== orderItemId) } : o,
           ),
         });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('removeItemFromOrder', [orderId, orderItemId], get().deviceId);
+        }
       },
 
       addOrderComment: (orderId, role, message) => {
@@ -349,6 +530,10 @@ export const useAppStore = create<AppState>()(
               : o,
           ),
         });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('addOrderComment', [orderId, role, message], get().deviceId);
+        }
       },
 
       setOrderStatus: (orderId, status) => {
@@ -370,6 +555,10 @@ export const useAppStore = create<AppState>()(
         }
 
         set({ orders: nextOrders, tables: nextTables });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('setOrderStatus', [orderId, status], get().deviceId);
+        }
       },
 
       setOrderExpectedAt: (orderId, date) => {
@@ -377,6 +566,10 @@ export const useAppStore = create<AppState>()(
         set({
           orders: s.orders.map((o) => (o.id === orderId ? { ...o, expectedAt: date } : o)),
         });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('setOrderExpectedAt', [orderId, date], get().deviceId);
+        }
       },
 
       closeOrder: (orderId) => {
@@ -404,6 +597,10 @@ export const useAppStore = create<AppState>()(
         }
 
         set({ orders: updatedOrders, tables: nextTables });
+        const shouldEmit = !!(get().masterDeviceId && get().masterDeviceId !== get().deviceId);
+        if (shouldEmit) {
+          SyncManager.emitAction('closeOrder', [orderId], get().deviceId);
+        }
       },
 
       // Selectors
@@ -473,7 +670,71 @@ export const useAppStore = create<AppState>()(
           ],
           currentUserId: undefined,
           currentRestaurantId: undefined,
+          memberships: [],
+          masterDeviceId: undefined,
+          socketStatus: 'disabled',
+          serverHost: undefined,
+          serverPort: 5555,
         })),
+
+      // Sync / Socket
+      setServerAddress: (host, port) =>
+        set((s) => ({ serverHost: host, serverPort: port ?? s.serverPort })),
+      setMasterDevice: (deviceId) => set({ masterDeviceId: deviceId }),
+      setSocketStatus: (status) => set({ socketStatus: status }),
+      upsertConnectedDevice: (id, name) =>
+        set((s) => ({
+          connectedDevices: s.connectedDevices.includes(id)
+            ? s.connectedDevices
+            : [...s.connectedDevices, id],
+          connectedDeviceNames: name
+            ? { ...s.connectedDeviceNames, [id]: name }
+            : s.connectedDeviceNames,
+        })),
+      applySnapshot: (data) =>
+        set((s) => ({
+          // Merge snapshot selectively
+          tables: data.tables ?? s.tables,
+          categories: data.categories ?? s.categories,
+          products: data.products ?? s.products,
+          orders: data.orders ?? s.orders,
+          restaurants: data.restaurants ?? s.restaurants,
+          users: data.users ?? s.users,
+          currentUserId: s.currentUserId,
+          currentRestaurantId: s.currentRestaurantId,
+          memberships: (data as any).memberships ?? s.memberships,
+        })),
+      startAsMaster: async () => {
+        const s = get();
+        try {
+          set({ socketStatus: 'connecting' });
+          await SyncManager.startServer(s.serverPort);
+          set({ socketStatus: 'connected', masterDeviceId: s.deviceId });
+          // Advertise via mDNS
+          const serviceName = `orders-master-${s.deviceId}`;
+          Zeroconf.startAdvertising(serviceName, s.serverPort);
+        } catch (e) {
+          set({ socketStatus: 'error' });
+        }
+      },
+      connectToMaster: async () => {
+        const s = get();
+        try {
+          if (!s.serverHost) throw new Error('serverHost missing');
+          set({ socketStatus: 'connecting' });
+          await SyncManager.connectToServer(s.serverHost, s.serverPort);
+          set({ socketStatus: 'connected' });
+          // Say hello + request snapshot (handled by server)
+          const deviceName = (Constants?.deviceName as any) || `Device-${s.deviceId.slice(-4)}`;
+          SyncManager.send({ type: 'HELLO', from: s.deviceId, name: deviceName } as any);
+          // mini-cooldown then ask
+          setTimeout(() => {
+            (SyncManager as any).send({ type: 'REQUEST_SNAPSHOT', from: s.deviceId } as any);
+          }, 200);
+        } catch (e) {
+          set({ socketStatus: 'error' });
+        }
+      },
     }),
     {
       name: 'pauline-store',
@@ -486,6 +747,13 @@ export const useAppStore = create<AppState>()(
           // exemple de migration : on remet les produits seeds
           return { ...persisted, products: seedProducts };
         }
+        if (fromVersion < 7) {
+          return {
+            ...persisted,
+            memberships: persisted.memberships ?? [],
+            serverPort: persisted.serverPort ?? 5555,
+          };
+        }
         return persisted;
       },
       onRehydrateStorage: () => (state, error) => {
@@ -494,3 +762,74 @@ export const useAppStore = create<AppState>()(
     },
   ),
 );
+
+// Wire incoming sync messages to store actions (runs on maître server).
+SyncManager.setOnMessage((msg) => {
+  const s = useAppStore.getState();
+  // Ignore echoes from myself
+  if ((msg as any).from && (msg as any).from === s.deviceId) return;
+  if (msg.type === 'HELLO') {
+    const dev = (msg as any).from as string;
+    const name = (msg as any).name as string | undefined;
+    if (dev) s.upsertConnectedDevice(dev, name);
+    return;
+  }
+  if (msg.type === 'REQUEST_SNAPSHOT') {
+    // We're the maître; craft and send a snapshot
+    const snapshot = ((): any => {
+      const st = useAppStore.getState();
+      return {
+        tables: st.tables,
+        categories: st.categories,
+        products: st.products,
+        orders: st.orders,
+        restaurants: st.restaurants,
+        users: st.users,
+        memberships: st.memberships,
+      };
+    })();
+    const to = (msg as any).from as string | undefined;
+    (SyncManager as any).send({ type: 'SNAPSHOT', data: snapshot, to } as any);
+    return;
+  }
+  if (msg.type === 'SNAPSHOT') {
+    const target = (msg as any).to as string | undefined;
+    if (target && target !== s.deviceId) return;
+    s.applySnapshot((msg as any).data || {});
+    return;
+  }
+  if (msg.type === 'ACTION') {
+    switch (msg.name) {
+      case 'createOrder':
+        s.createOrder(msg.args[0], msg.args[1]);
+        break;
+      case 'setOrderPaid':
+        s.setOrderPaid(msg.args[0], msg.args[1]);
+        break;
+      case 'deleteOrder':
+        s.deleteOrder(msg.args[0]);
+        break;
+      case 'addItemToOrder':
+        s.addItemToOrder(msg.args[0], msg.args[1], msg.args[2]);
+        break;
+      case 'updateItemQty':
+        s.updateItemQty(msg.args[0], msg.args[1], msg.args[2]);
+        break;
+      case 'removeItemFromOrder':
+        s.removeItemFromOrder(msg.args[0], msg.args[1]);
+        break;
+      case 'addOrderComment':
+        s.addOrderComment(msg.args[0], msg.args[1], msg.args[2]);
+        break;
+      case 'setOrderStatus':
+        s.setOrderStatus(msg.args[0], msg.args[1]);
+        break;
+      case 'setOrderExpectedAt':
+        s.setOrderExpectedAt(msg.args[0], msg.args[1]);
+        break;
+      case 'closeOrder':
+        s.closeOrder(msg.args[0]);
+        break;
+    }
+  }
+});

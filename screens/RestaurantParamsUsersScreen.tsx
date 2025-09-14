@@ -1,6 +1,6 @@
 // app/restaurant/[id]/(tabs)/params/users.tsx
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAppStore } from '@/hooks/useAppStore';
@@ -11,38 +11,43 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import Button from '@/components/ui/Button';
 import ButtonGroup from '@/components/ui/ButtonGroup';
 import ConfirmModal from '@/components/modals/ConfirmModal';
+import { ThemedText } from '@/components/ThemedText';
 
-// Typage User (selon ton store) + champs optionnels utiles ici
-type User = {
-  id: string;
-  firstname: string;
-  lastname: string;
-  email: string;
-  password: string;
-  role?: string;
-  restaurantId?: string;
-};
+import type { Role } from '@/hooks/useAppStore';
 
 export default function RestaurantParamsUsersScreen() {
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
 
   const currentRestaurantId = useAppStore((s) => s.currentRestaurantId);
-  const usersAll = useAppStore((s) => s.users as User[]);
+  const currentUserId = useAppStore((s) => s.currentUserId);
+  const usersAll = useAppStore((s) => s.users);
+  const memberships = useAppStore((s) => s.memberships);
+  const approveMembership = useAppStore((s) => s.approveMembership);
+  const revokeMembership = useAppStore((s) => s.revokeMembership);
 
-  // Filtrage par restaurant si pertinent
-  const users = useMemo(() => {
-    if (!currentRestaurantId) return usersAll;
-    const someHaveRestaurant = usersAll.some((u) => u.restaurantId);
-    return someHaveRestaurant
-      ? usersAll.filter((u) => u.restaurantId === currentRestaurantId)
-      : usersAll;
-  }, [usersAll, currentRestaurantId]);
+  const usersById = useMemo(() => Object.fromEntries(usersAll.map((u) => [u.id, u])), [usersAll]);
+
+  const members = useMemo(() => {
+    if (!currentRestaurantId) return [] as any[];
+    return memberships
+      .filter((m) => m.restaurantId === currentRestaurantId && m.status === 'accepted')
+      .map((m) => ({ ...m, user: usersById[m.userId] }))
+      .sort((a, b) => a.user?.firstname?.localeCompare(b.user?.firstname || '') || 0);
+  }, [memberships, currentRestaurantId, usersById]);
+
+  const pending = useMemo(() => {
+    if (!currentRestaurantId) return [] as any[];
+    return memberships
+      .filter((m) => m.restaurantId === currentRestaurantId && m.status === 'pending')
+      .map((m) => ({ ...m, user: usersById[m.userId] }));
+  }, [memberships, currentRestaurantId, usersById]);
 
   // UI state
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [roleModalUser, setRoleModalUser] = useState<User | null>(null);
-  const [excludeModalUser, setExcludeModalUser] = useState<User | null>(null);
+  const [roleModalMemberId, setRoleModalMemberId] = useState<string | null>(null);
+  const [excludeModalMemberId, setExcludeModalMemberId] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<Role>('waiter');
 
   const toggleExpand = useCallback(
     (id: string) => setExpandedId((cur) => (cur === id ? null : id)),
@@ -59,7 +64,7 @@ export default function RestaurantParamsUsersScreen() {
     // adapte si tu as une liste stricte des rôles
   };
 
-  const renderItem = ({ item }: { item: User }) => {
+  const renderItem = ({ item }: { item: any }) => {
     const isOpen = expandedId === item.id;
     const role = item.role ?? '—';
     const pill = rolePillColor(item.role);
@@ -77,6 +82,19 @@ export default function RestaurantParamsUsersScreen() {
           overflow: 'hidden',
         }}
       >
+        {/* <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: spacing(1.25) }}>
+          <View style={styles.heroIcon}>
+            <Ionicons name="pricetag-outline" size={22} color={C.neutral0} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <ThemedText type="defaultSemiBold" style={{ color: C.neutral0, fontSize: 18 }}>
+              Produits
+            </ThemedText>
+            <ThemedText style={{ color: 'rgba(255,255,255,0.95)' }}>
+              {users.length} utilisateurs(s) configuré(s)
+            </ThemedText>
+          </View>
+        </View> */}
         <View
           style={{
             position: 'absolute',
@@ -115,9 +133,9 @@ export default function RestaurantParamsUsersScreen() {
           {/* Infos */}
           <View style={{ flex: 1 }}>
             <Text style={[typography.defaultSemiBold, { color: C.text }]}>
-              {item.firstname} {item.lastname}
+              {item.user?.firstname} {item.user?.lastname}
             </Text>
-            <Text style={{ color: C.muted, fontSize: 13 }}>{item.email}</Text>
+            <Text style={{ color: C.muted, fontSize: 13 }}>{item.user?.email}</Text>
           </View>
 
           {/* Rôle (pill) */}
@@ -152,7 +170,10 @@ export default function RestaurantParamsUsersScreen() {
                 size="md"
                 fullWidth
                 leftIcon="shield-checkmark-outline"
-                onPress={() => setRoleModalUser(item)}
+                onPress={() => {
+                  setRoleModalMemberId(item.id);
+                  setSelectedRole(item.role || 'waiter');
+                }}
               >
                 Role
               </Button>
@@ -161,7 +182,7 @@ export default function RestaurantParamsUsersScreen() {
                 size="md"
                 fullWidth
                 leftIcon="person-remove-outline"
-                onPress={() => setExcludeModalUser(item)}
+                onPress={() => setExcludeModalMemberId(item.id)}
               >
                 Exclure
               </Button>
@@ -174,47 +195,110 @@ export default function RestaurantParamsUsersScreen() {
 
   return (
     <View style={{ flex: 1, padding: spacing(2), backgroundColor: C.background }}>
+      {/* Pending requests */}
+      {pending.length > 0 && (
+        <View style={{ marginBottom: spacing(1.25) }}>
+          <ThemedText type="defaultSemiBold">Demandes en attente</ThemedText>
+        </View>
+      )}
       <FlatList
-        data={users}
+        data={pending}
+        keyExtractor={(u) => u.id}
+        renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: spacing(4) }}
+      />
+
+      <View style={{ height: spacing(1.5) }} />
+
+      <ThemedText type="defaultSemiBold" style={{ marginBottom: spacing(1) }}>
+        Membres
+      </ThemedText>
+      <FlatList
+        data={members}
         keyExtractor={(u) => u.id}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: spacing(4) }}
         ListEmptyComponent={
           <View style={{ padding: spacing(2) }}>
-            <Text style={{ color: C.muted }}>Aucun utilisateur pour ce restaurant.</Text>
+            <Text style={{ color: C.muted }}>Aucun membre.</Text>
           </View>
         }
       />
 
       {/* Modale Changer le rôle */}
-      <ConfirmModal
-        visible={!!roleModalUser}
-        title="Changer le rôle"
-        message={
-          roleModalUser
-            ? `Changer le rôle de ${roleModalUser.firstname} ${roleModalUser.lastname} ?`
-            : ''
-        }
-        confirmText="Confirmer"
-        cancelText="Annuler"
-        onCancel={() => setRoleModalUser(null)}
-        onConfirm={() => setRoleModalUser(null)} // pour l’instant, noop
-      />
+      {roleModalMemberId && (
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: C.card,
+            borderTopLeftRadius: radius.lg,
+            borderTopRightRadius: radius.lg,
+            borderWidth: 1,
+            borderColor: C.border,
+            padding: spacing(1.5),
+          }}
+        >
+          <ThemedText type="defaultSemiBold" style={{ marginBottom: spacing(1) }}>
+            Choisir un rôle
+          </ThemedText>
+          <ButtonGroup segmented fullWidth gap={1}>
+            {(['waiter', 'preparator', 'cashier', 'supervisor', 'owner'] as Role[]).map((r) => (
+              <Button
+                key={r}
+                variant={selectedRole === r ? 'primary' : 'outline'}
+                onPress={() => setSelectedRole(r)}
+                fullWidth
+              >
+                {r}
+              </Button>
+            ))}
+          </ButtonGroup>
+          <View style={{ flexDirection: 'row', gap: spacing(1), marginTop: spacing(1) }}>
+            <Button fullWidth variant="outline" onPress={() => setRoleModalMemberId(null)}>
+              Annuler
+            </Button>
+            <Button
+              fullWidth
+              onPress={() => {
+                if (currentUserId && roleModalMemberId) {
+                  approveMembership(roleModalMemberId, selectedRole, currentUserId);
+                }
+                setRoleModalMemberId(null);
+              }}
+            >
+              Confirmer
+            </Button>
+          </View>
+        </View>
+      )}
 
       {/* Modale Exclure */}
       <ConfirmModal
-        visible={!!excludeModalUser}
+        visible={!!excludeModalMemberId}
         title="Exclure du restaurant"
-        message={
-          excludeModalUser
-            ? `Exclure ${excludeModalUser.firstname} ${excludeModalUser.lastname} du restaurant ?`
-            : ''
-        }
+        message="Confirmez l’exclusion de ce membre."
         confirmText="Exclure"
         cancelText="Annuler"
-        onCancel={() => setExcludeModalUser(null)}
-        onConfirm={() => setExcludeModalUser(null)} // pour l’instant, noop
+        onCancel={() => setExcludeModalMemberId(null)}
+        onConfirm={() => {
+          if (excludeModalMemberId) revokeMembership(excludeModalMemberId);
+          setExcludeModalMemberId(null);
+        }}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  heroIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+});
