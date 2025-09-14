@@ -110,13 +110,16 @@ class _ZeroconfWrapper {
         resolve([]);
         return;
       }
-      setTimeout(() => {
-        try {
-          tmp.off?.('resolved', resolvedHandler);
-          tmp.stop();
-        } catch {}
-        resolve(Object.values(results));
-      }, Math.max(1000, timeoutMs));
+      setTimeout(
+        () => {
+          try {
+            tmp.off?.('resolved', resolvedHandler);
+            tmp.stop();
+          } catch {}
+          resolve(Object.values(results));
+        },
+        Math.max(1000, timeoutMs),
+      );
     });
   }
 }

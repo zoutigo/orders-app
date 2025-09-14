@@ -302,7 +302,11 @@ export default function RestaurantDisconnect() {
                       if (id === deviceId) return;
                       if (isMaster) {
                         // Demander explicitement à cet appareil de devenir maître
-                        SyncManager.sendControl('BECOME_MASTER', { to: id, from: deviceId, port: serverPort });
+                        SyncManager.sendControl('BECOME_MASTER', {
+                          to: id,
+                          from: deviceId,
+                          port: serverPort,
+                        });
                         Toast.show({ type: 'success', text1: 'Demande de délégation envoyée' });
                       } else {
                         setMasterDevice(id);
