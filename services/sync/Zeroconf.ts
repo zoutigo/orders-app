@@ -10,42 +10,53 @@ export type Service = {
 };
 
 class _ZeroconfWrapper {
-  private zc: any | null = null;
+  private zcBrowser: any | null = null;
+  private zcAdvertiser: any | null = null;
   private browsing = false;
   private advertising = false;
 
-  private ensure() {
-    if (this.zc) return;
+  private ensureBrowser() {
+    if (this.zcBrowser) return;
     try {
       const Zeroconf = require('react-native-zeroconf');
-      this.zc = new Zeroconf();
+      this.zcBrowser = new Zeroconf();
     } catch {
-      this.zc = null;
+      this.zcBrowser = null;
+    }
+  }
+
+  private ensureAdvertiser() {
+    if (this.zcAdvertiser) return;
+    try {
+      const Zeroconf = require('react-native-zeroconf');
+      this.zcAdvertiser = new Zeroconf();
+    } catch {
+      this.zcAdvertiser = null;
     }
   }
 
   startAdvertising(serviceName: string, port: number, type = 'ordersapp', domain = 'local.') {
-    this.ensure();
-    if (!this.zc || this.advertising) return;
+    this.ensureAdvertiser();
+    if (!this.zcAdvertiser || this.advertising) return;
     try {
-      this.zc.publishService(type, 'tcp', domain, serviceName, port, {});
+      this.zcAdvertiser.publishService(type, 'tcp', domain, serviceName, port, {});
       this.advertising = true;
     } catch {}
   }
 
   stopAdvertising() {
-    if (!this.zc) return;
+    if (!this.zcAdvertiser) return;
     try {
-      this.zc.stop();
+      this.zcAdvertiser.stop();
     } catch {}
     this.advertising = false;
   }
 
   startBrowsing(onService: (svc: Service) => void, type = 'ordersapp', domain = 'local.') {
-    this.ensure();
-    if (!this.zc || this.browsing) return;
+    this.ensureBrowser();
+    if (!this.zcBrowser || this.browsing) return;
     try {
-      this.zc.on('resolved', (service: any) => {
+      this.zcBrowser.on('resolved', (service: any) => {
         onService({
           name: service?.name,
           host: service?.host,
@@ -53,15 +64,15 @@ class _ZeroconfWrapper {
           port: service?.port,
         });
       });
-      this.zc.scan(type, 'tcp', domain);
+      this.zcBrowser.scan(type, 'tcp', domain);
       this.browsing = true;
     } catch {}
   }
 
   stopBrowsing() {
-    if (!this.zc) return;
+    if (!this.zcBrowser) return;
     try {
-      this.zc.stop();
+      this.zcBrowser.stop();
     } catch {}
     this.browsing = false;
   }
@@ -71,8 +82,14 @@ class _ZeroconfWrapper {
    * Convenience wrapper for UI that needs a refresh button.
    */
   async browseOnce(timeoutMs = 3000, type = 'ordersapp', domain = 'local.'): Promise<Service[]> {
-    this.ensure();
-    if (!this.zc) return [];
+    // Use a dedicated instance so we don't stop advertising
+    let tmp: any = null;
+    try {
+      const Zeroconf = require('react-native-zeroconf');
+      tmp = new Zeroconf();
+    } catch {
+      return [];
+    }
     const results: Record<string, Service> = {};
     return await new Promise<Service[]>((resolve) => {
       let resolvedHandler: any;
@@ -87,22 +104,19 @@ class _ZeroconfWrapper {
           const key = `${svc.host || svc.addresses?.[0] || svc.name}:${svc.port || ''}`;
           results[key] = svc;
         };
-        this.zc.on('resolved', resolvedHandler);
-        this.zc.scan(type, 'tcp', domain);
+        tmp.on('resolved', resolvedHandler);
+        tmp.scan(type, 'tcp', domain);
       } catch {
         resolve([]);
         return;
       }
-      setTimeout(
-        () => {
-          try {
-            this.zc.off?.('resolved', resolvedHandler);
-            this.zc.stop();
-          } catch {}
-          resolve(Object.values(results));
-        },
-        Math.max(1000, timeoutMs),
-      );
+      setTimeout(() => {
+        try {
+          tmp.off?.('resolved', resolvedHandler);
+          tmp.stop();
+        } catch {}
+        resolve(Object.values(results));
+      }, Math.max(1000, timeoutMs));
     });
   }
 }

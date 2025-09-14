@@ -13,6 +13,7 @@ import { spacing, radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import Toast from 'react-native-toast-message';
 import { Zeroconf, Service as ZcService } from '@/services/sync/Zeroconf';
+import { SyncManager } from '@/services/sync/SyncManager';
 
 export default function RestaurantDisconnect() {
   const logout = useAppStore((s) => s.logout);
@@ -28,6 +29,7 @@ export default function RestaurantDisconnect() {
   const serverPort = useAppStore((s) => s.serverPort);
   const setServerAddress = useAppStore((s) => s.setServerAddress);
   const startAsMaster = useAppStore((s) => s.startAsMaster);
+  const stopMaster = useAppStore((s) => s.stopMaster);
   const connectToMaster = useAppStore((s) => s.connectToMaster);
   const connectedDevices = useAppStore((s) => s.connectedDevices);
   const deviceNames = useAppStore((s) => s.connectedDeviceNames);
@@ -84,6 +86,7 @@ export default function RestaurantDisconnect() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isMaster = masterDeviceId && masterDeviceId === deviceId && socketStatus === 'connected';
   const ConnectedIcon = (
     <Ionicons
       name={
@@ -158,9 +161,8 @@ export default function RestaurantDisconnect() {
             <ThemedText type="defaultSemiBold">Synchronisation locale</ThemedText>
             {ConnectedIcon}
           </View>
-          <ThemedText style={{ color: C.muted }}>
-            Statut: {socketStatus} • Appareil: {deviceId}
-          </ThemedText>
+          <ThemedText style={{ color: C.muted }}>Statut: {socketStatus}</ThemedText>
+          <ThemedText style={{ color: C.muted }}>Appareil: {deviceId}</ThemedText>
           <ThemedText style={{ color: C.muted }}>
             Maître: {masterDeviceId ? masterDeviceId : 'non défini'}
           </ThemedText>
@@ -180,20 +182,29 @@ export default function RestaurantDisconnect() {
             <Button
               fullWidth
               size="md"
-              leftIcon="server-outline"
+              leftIcon={isMaster ? 'stop-circle-outline' : 'server-outline'}
+              variant={isMaster ? 'danger' : 'primary'}
               onPress={async () => {
-                await startAsMaster();
-                Toast.show({ type: 'success', text1: 'Appareil mis en maître ✅' });
-                // relance une annonce réseau et une recherche
+                if (isMaster) {
+                  await stopMaster();
+                  Toast.show({ type: 'success', text1: 'Maître arrêté ✅' });
+                } else {
+                  await startAsMaster();
+                  Toast.show({ type: 'success', text1: 'Appareil mis en maître ✅' });
+                }
                 setTimeout(() => doScan(), 600);
               }}
             >
-              Démarrer comme maître
+              {isMaster ? 'Arrêter le maître' : 'Démarrer comme maître'}
             </Button>
           </View>
 
           {/* Liste des maîtres découverts */}
-          {services.length > 0 ? (
+          {isMaster ? (
+            <ThemedText style={{ color: C.muted }}>
+              Vous êtes le maître et annoncez le service sur le réseau.
+            </ThemedText>
+          ) : services.length > 0 ? (
             <View style={{ marginTop: spacing(1) }}>
               {services.map((svc, idx) => {
                 const addr = svc.addresses?.[0] || svc.host || '—';
@@ -287,7 +298,16 @@ export default function RestaurantDisconnect() {
                   <Button
                     size="sm"
                     variant={masterDeviceId === id ? 'primary' : 'outline'}
-                    onPress={() => setMasterDevice(id)}
+                    onPress={() => {
+                      if (id === deviceId) return;
+                      if (isMaster) {
+                        // Demander explicitement à cet appareil de devenir maître
+                        SyncManager.sendControl('BECOME_MASTER', { to: id, from: deviceId, port: serverPort });
+                        Toast.show({ type: 'success', text1: 'Demande de délégation envoyée' });
+                      } else {
+                        setMasterDevice(id);
+                      }
+                    }}
                   >
                     {masterDeviceId === id ? 'Maître' : 'Définir maître'}
                   </Button>

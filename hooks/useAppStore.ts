@@ -139,6 +139,7 @@ type AppState = {
   setSocketStatus: (_status: SocketStatus) => void;
   startAsMaster: () => Promise<void>;
   connectToMaster: () => Promise<void>;
+  stopMaster: () => Promise<void>;
 
   // Devices connectés (côté maître)
   connectedDevices: string[];
@@ -711,11 +712,23 @@ export const useAppStore = create<AppState>()(
           await SyncManager.startServer(s.serverPort);
           set({ socketStatus: 'connected', masterDeviceId: s.deviceId });
           // Advertise via mDNS
-          const serviceName = `orders-master-${s.deviceId}`;
+          const deviceName = (Constants?.deviceName as any) || `Device-${s.deviceId.slice(-4)}`;
+          const serviceName = `orders-master-${deviceName}-${s.deviceId.slice(-4)}`;
           Zeroconf.startAdvertising(serviceName, s.serverPort);
+          // En tant que maître, ajouter mon propre nom dans la liste locale
+          get().upsertConnectedDevice(s.deviceId, deviceName);
         } catch (e) {
           set({ socketStatus: 'error' });
         }
+      },
+      stopMaster: async () => {
+        try {
+          await SyncManager.stopServer();
+        } catch {}
+        try {
+          Zeroconf.stopAdvertising();
+        } catch {}
+        set({ socketStatus: 'disabled', masterDeviceId: undefined, connectedDevices: [] });
       },
       connectToMaster: async () => {
         const s = get();
@@ -797,6 +810,46 @@ SyncManager.setOnMessage((msg) => {
     if (target && target !== s.deviceId) return;
     s.applySnapshot((msg as any).data || {});
     return;
+  }
+  if (msg.type === 'CONTROL') {
+    const cmd = (msg as any).cmd as string;
+    const to = (msg as any).to as string | undefined;
+    const from = (msg as any).from as string | undefined;
+    if (cmd === 'BECOME_MASTER' && (!to || to === s.deviceId)) {
+      // I'm asked to become master
+      (async () => {
+        await s.startAsMaster();
+        // Notify others I am master; port already known in store
+        SyncManager.send({ type: 'CONTROL', cmd: 'MASTER_STARTED', from: s.deviceId } as any);
+      })();
+      return;
+    }
+    if (cmd === 'MASTER_STARTED' && from && from !== s.deviceId) {
+      // Another device became master. Try to discover it via mDNS and connect.
+      (async () => {
+        try {
+          useAppStore.setState({ masterDeviceId: from, socketStatus: 'connecting' });
+          const found = await Zeroconf.browseOnce(3000);
+          // Heuristic: pick first orders-master-* service
+          const svc = found.find((f) => (f.name || '').startsWith('orders-master-'));
+          if (svc) {
+            const addr = svc.addresses?.[0] || svc.host;
+            const port = svc.port || s.serverPort;
+            if (addr && port) {
+              s.setServerAddress(addr, port);
+              await s.connectToMaster();
+            } else {
+              useAppStore.setState({ socketStatus: 'error' });
+            }
+          } else {
+            useAppStore.setState({ socketStatus: 'error' });
+          }
+        } catch {
+          useAppStore.setState({ socketStatus: 'error' });
+        }
+      })();
+      return;
+    }
   }
   if (msg.type === 'ACTION') {
     switch (msg.name) {

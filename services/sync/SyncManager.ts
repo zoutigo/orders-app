@@ -19,7 +19,8 @@ type Message =
   | { type: 'HELLO'; from: string; name?: string }
   | { type: 'ACTION'; name: ActionName; args: any[]; from?: string }
   | { type: 'REQUEST_SNAPSHOT'; from: string }
-  | { type: 'SNAPSHOT'; data: any; to?: string };
+  | { type: 'SNAPSHOT'; data: any; to?: string }
+  | { type: 'CONTROL'; cmd: 'BECOME_MASTER' | 'MASTER_STARTED'; to?: string; from?: string; port?: number };
 
 /**
  * Very small singleton to avoid wiring complexity everywhere.
@@ -127,6 +128,11 @@ class _SyncManager {
     } else {
       this.send(payload);
     }
+  }
+
+  sendControl(cmd: 'BECOME_MASTER' | 'MASTER_STARTED', opts: { to?: string; from?: string; port?: number } = {}) {
+    const msg: Message = { type: 'CONTROL', cmd, ...opts } as any;
+    this.send(msg);
   }
 
   send(msg: Message) {
