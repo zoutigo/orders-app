@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -11,8 +11,8 @@ import ToolbarSpacer from '@/components/ui/ToolbarSpacer';
 import Colors from '@/constants/Colors';
 import { spacing, radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { ThemedInputBase } from '@/components/ui/ThemedInputText';
-import { Zeroconf } from '@/services/sync/Zeroconf';
+import Toast from 'react-native-toast-message';
+import { Zeroconf, Service as ZcService } from '@/services/sync/Zeroconf';
 
 export default function RestaurantDisconnect() {
   const logout = useAppStore((s) => s.logout);
@@ -38,8 +38,10 @@ export default function RestaurantDisconnect() {
 
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
-  const [hostInput, setHostInput] = useState(serverHost ?? '');
-  const [portInput, setPortInput] = useState(String(serverPort ?? 5555));
+  // Découverte mDNS
+  const [services, setServices] = useState<ZcService[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const lastConnectedRef = useRef<string | undefined>(undefined);
 
   const handleRestaurantDisconnect = () => {
     setCurrentRestaurant(undefined);
@@ -52,11 +54,55 @@ export default function RestaurantDisconnect() {
     router.replace('/login');
   };
 
+  // Toaster when status changes
+  useEffect(() => {
+    if (socketStatus === 'connected' && lastConnectedRef.current !== 'connected') {
+      Toast.show({
+        type: 'success',
+        text1: masterDeviceId === deviceId ? 'Appareil maître démarré ✅' : 'Connecté au maître ✅',
+      });
+    }
+    if (socketStatus === 'error' && lastConnectedRef.current !== 'error') {
+      Toast.show({ type: 'error', text1: 'Connexion échouée ❌' });
+    }
+    lastConnectedRef.current = socketStatus as any;
+  }, [socketStatus, masterDeviceId, deviceId]);
+
+  const doScan = async () => {
+    setScanning(true);
+    try {
+      const found = await Zeroconf.browseOnce(3500);
+      setServices(found);
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  useEffect(() => {
+    // Scan au montage
+    doScan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const ConnectedIcon = (
+    <Ionicons
+      name={
+        socketStatus === 'connected'
+          ? 'wifi'
+          : socketStatus === 'connecting'
+            ? 'wifi-outline'
+            : 'wifi'
+      }
+      size={16}
+      color={socketStatus === 'connected' ? C.success : C.muted}
+    />
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: C.background }}>
       <Toolbar title="Mon compte" subtitle={user?.email ?? ''} centerTitle sticky />
       <ToolbarSpacer />
-      <View style={{ padding: spacing(2) }}>
+      <ScrollView contentContainerStyle={{ padding: spacing(2), paddingBottom: spacing(3) }}>
         {/* --------- User Card --------- */}
         <View
           style={{
@@ -91,10 +137,10 @@ export default function RestaurantDisconnect() {
             </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* --------- Sync / Socket --------- */}
-      <View style={{ padding: spacing(2), paddingTop: 0 }}>
+      <ScrollView contentContainerStyle={{ padding: spacing(2), paddingTop: 0 }}>
         <View
           style={{
             backgroundColor: C.card,
@@ -106,7 +152,12 @@ export default function RestaurantDisconnect() {
             gap: spacing(1),
           }}
         >
-          <ThemedText type="defaultSemiBold">Synchronisation locale</ThemedText>
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <ThemedText type="defaultSemiBold">Synchronisation locale</ThemedText>
+            {ConnectedIcon}
+          </View>
           <ThemedText style={{ color: C.muted }}>
             Statut: {socketStatus} • Appareil: {deviceId}
           </ThemedText>
@@ -115,37 +166,16 @@ export default function RestaurantDisconnect() {
           </ThemedText>
 
           <View style={{ height: spacing(1) }} />
-
-          <ThemedInputBase
-            label="Adresse IP du maître"
-            value={hostInput}
-            onChangeText={(t) => setHostInput(t)}
-            placeholder="ex: 192.168.1.10"
-            autoCapitalize="none"
-            icon="wifi-outline"
-          />
-          <ThemedInputBase
-            label="Port"
-            value={portInput}
-            onChangeText={(t) => setPortInput(t.replace(/[^0-9]/g, ''))}
-            keyboardType="number-pad"
-            placeholder="5555"
-            icon="git-network-outline"
-          />
-
-          <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+          {/* Parcours mDNS et connexion sans saisie manuelle */}
+          <View style={{ flexDirection: 'column', gap: spacing(1), alignItems: 'stretch' }}>
             <Button
               fullWidth
               size="md"
-              variant="outline"
-              leftIcon="radio-button-on-outline"
-              onPress={async () => {
-                const p = parseInt(portInput || '5555', 10) || 5555;
-                setServerAddress(hostInput || '', p);
-                await connectToMaster();
-              }}
+              leftIcon={scanning ? 'sync' : 'search-outline'}
+              onPress={doScan}
+              disabled={scanning}
             >
-              Se connecter au maître
+              {scanning ? 'Recherche…' : 'Actualiser la liste'}
             </Button>
             <Button
               fullWidth
@@ -153,32 +183,81 @@ export default function RestaurantDisconnect() {
               leftIcon="server-outline"
               onPress={async () => {
                 await startAsMaster();
+                Toast.show({ type: 'success', text1: 'Appareil mis en maître ✅' });
+                // relance une annonce réseau et une recherche
+                setTimeout(() => doScan(), 600);
               }}
             >
               Démarrer comme maître
             </Button>
           </View>
 
-          <View style={{ flexDirection: 'row', gap: spacing(1) }}>
-            <Button
-              fullWidth
-              size="md"
-              variant="ghost"
-              leftIcon="search-outline"
-              onPress={() => {
-                Zeroconf.startBrowsing((svc) => {
-                  const addr = svc.addresses?.[0] || svc.host;
-                  if (addr && svc.port) {
-                    setHostInput(addr);
-                    setPortInput(String(svc.port));
-                    setServerAddress(addr, svc.port);
-                  }
-                });
-              }}
-            >
-              Découvrir le maître (mDNS)
-            </Button>
-          </View>
+          {/* Liste des maîtres découverts */}
+          {services.length > 0 ? (
+            <View style={{ marginTop: spacing(1) }}>
+              {services.map((svc, idx) => {
+                const addr = svc.addresses?.[0] || svc.host || '—';
+                const isCurrent = addr && addr === serverHost && socketStatus === 'connected';
+                const isMasterSvc = (svc.name || '').startsWith('orders-master-');
+                return (
+                  <Pressable
+                    key={`${addr}:${svc.port}:${idx}`}
+                    android_ripple={{ color: C.ripple }}
+                    onPress={async () => {
+                      if (!addr || !svc.port) return;
+                      setServerAddress(addr, svc.port);
+                      await connectToMaster();
+                    }}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: isCurrent ? C.success : C.border,
+                      borderRadius: radius.md,
+                      padding: spacing(1),
+                      marginBottom: spacing(1),
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: C.card,
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <ThemedText type="defaultSemiBold">{svc.name || 'Maître détecté'}</ThemedText>
+                      <ThemedText style={{ color: C.muted }}>
+                        {addr}:{svc.port}
+                      </ThemedText>
+                    </View>
+                    {isMasterSvc && (
+                      <View
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                          borderRadius: 999,
+                          backgroundColor: C.surface,
+                          borderWidth: 1,
+                          borderColor: isCurrent ? C.success : C.border,
+                          marginRight: spacing(1),
+                        }}
+                      >
+                        <ThemedText
+                          type="caption"
+                          style={{ color: isCurrent ? C.success : C.muted }}
+                        >
+                          maître
+                        </ThemedText>
+                      </View>
+                    )}
+                    <Ionicons
+                      name={isCurrent ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={isCurrent ? C.success : C.muted}
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <ThemedText style={{ color: C.muted }}>Aucun maître détecté pour le moment.</ThemedText>
+          )}
 
           {currentRestaurantId && user ? (
             <ThemedText style={{ color: C.muted }}>
@@ -217,10 +296,10 @@ export default function RestaurantDisconnect() {
             </View>
           )}
         </View>
-      </View>
+      </ScrollView>
 
       {/* --------- Actions --------- */}
-      <View style={{ gap: spacing(1), paddingHorizontal: spacing(2) }}>
+      <View style={{ gap: spacing(1), paddingHorizontal: spacing(2), paddingBottom: spacing(2) }}>
         {/* Brand teal (action non destructive) */}
         <Button
           fullWidth

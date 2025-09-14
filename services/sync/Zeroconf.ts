@@ -2,7 +2,7 @@
 // Optional mDNS discovery/advertising using react-native-zeroconf.
 // No-ops gracefully if the module is not available (Expo managed w/o plugin).
 
-type Service = {
+export type Service = {
   name: string;
   host?: string;
   addresses?: string[];
@@ -64,6 +64,46 @@ class _ZeroconfWrapper {
       this.zc.stop();
     } catch {}
     this.browsing = false;
+  }
+
+  /**
+   * Browse once for a short time and return discovered services.
+   * Convenience wrapper for UI that needs a refresh button.
+   */
+  async browseOnce(timeoutMs = 3000, type = 'ordersapp', domain = 'local.'): Promise<Service[]> {
+    this.ensure();
+    if (!this.zc) return [];
+    const results: Record<string, Service> = {};
+    return await new Promise<Service[]>((resolve) => {
+      let resolvedHandler: any;
+      try {
+        resolvedHandler = (service: any) => {
+          const svc: Service = {
+            name: service?.name,
+            host: service?.host,
+            addresses: service?.addresses,
+            port: service?.port,
+          };
+          const key = `${svc.host || svc.addresses?.[0] || svc.name}:${svc.port || ''}`;
+          results[key] = svc;
+        };
+        this.zc.on('resolved', resolvedHandler);
+        this.zc.scan(type, 'tcp', domain);
+      } catch {
+        resolve([]);
+        return;
+      }
+      setTimeout(
+        () => {
+          try {
+            this.zc.off?.('resolved', resolvedHandler);
+            this.zc.stop();
+          } catch {}
+          resolve(Object.values(results));
+        },
+        Math.max(1000, timeoutMs),
+      );
+    });
   }
 }
 
