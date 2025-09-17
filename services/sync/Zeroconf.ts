@@ -122,6 +122,70 @@ class _ZeroconfWrapper {
       );
     });
   }
+
+  /**
+   * TCP port probing fallback when mDNS is not available (e.g., AP isolation).
+   * Tries common private subnets and resolves any host accepting connections on `port`.
+   */
+  async fallbackScanTCP(
+    port = 5555,
+    timeoutMs = 350,
+    prefixes = ['192.168.1', '192.168.0', '192.168.43', '172.20.10'],
+  ): Promise<Service[]> {
+    let tcp: any = null;
+    try {
+      tcp = require('react-native-tcp-socket');
+    } catch {
+      return [];
+    }
+    const candidates: string[] = [];
+    prefixes.forEach((p) => {
+      for (let i = 1; i < 255; i++) candidates.push(`${p}.${i}`);
+    });
+    const results: Service[] = [];
+    const limit = 32;
+    let idx = 0;
+
+    const tryOne = (host: string) =>
+      new Promise<void>((resolve) => {
+        let done = false;
+        const socket = tcp.createConnection({ host, port }, () => {
+          if (done) return;
+          done = true;
+          try {
+            socket.destroy();
+          } catch {}
+          results.push({ name: `tcp-${host}`, host, addresses: [host], port });
+          resolve();
+        });
+        const timer = setTimeout(() => {
+          if (done) return;
+          done = true;
+          try {
+            socket.destroy();
+          } catch {}
+          resolve();
+        }, timeoutMs);
+        socket.on('error', () => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          try {
+            socket.destroy();
+          } catch {}
+          resolve();
+        });
+      });
+
+    const workers = new Array(limit).fill(0).map(async () => {
+      while (idx < candidates.length) {
+        const host = candidates[idx++];
+        await tryOne(host);
+      }
+    });
+    await Promise.all(workers);
+    return results;
+  }
 }
 
 export const Zeroconf = new _ZeroconfWrapper();

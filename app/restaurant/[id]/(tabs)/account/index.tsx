@@ -73,7 +73,11 @@ export default function RestaurantDisconnect() {
   const doScan = async () => {
     setScanning(true);
     try {
-      const found = await Zeroconf.browseOnce(3500);
+      let found = await Zeroconf.browseOnce(3500);
+      if (!found || found.length === 0) {
+        const alt = await Zeroconf.fallbackScanTCP(serverPort || 5555);
+        found = alt;
+      }
       setServices(found);
     } finally {
       setScanning(false);
@@ -173,6 +177,14 @@ export default function RestaurantDisconnect() {
             <Button
               fullWidth
               size="md"
+              leftIcon="qr-code-outline"
+              onPress={() => router.push('./qr-scan')}
+            >
+              Scanner le QR du maître
+            </Button>
+            <Button
+              fullWidth
+              size="md"
               leftIcon={scanning ? 'sync' : 'search-outline'}
               onPress={doScan}
               disabled={scanning}
@@ -197,6 +209,17 @@ export default function RestaurantDisconnect() {
             >
               {isMaster ? 'Arrêter le maître' : 'Démarrer comme maître'}
             </Button>
+            {isMaster && (
+              <Button
+                fullWidth
+                size="md"
+                variant="outline"
+                leftIcon="qr-code-outline"
+                onPress={() => router.push('./qr-master')}
+              >
+                Afficher le QR maître
+              </Button>
+            )}
           </View>
 
           {/* Liste des maîtres découverts */}
